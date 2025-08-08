@@ -1,24 +1,26 @@
+// scripts/install-bot.js
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
-const botNodeModules = path.join(__dirname, '../bot/node_modules');
-const installLock = path.join(__dirname, '../bot/.installed');
+const BOT_DIR = path.join(__dirname, 'bot');
+const NODE_MODULES = path.join(BOT_DIR, 'node_modules');
 
-// If already installed, skip
-if (fs.existsSync(installLock)) {
-  console.log('✅ Bot dependencies already installed. Skipping.');
+// Check if bot/node_modules exists → assume already installed
+if (fs.existsSync(NODE_MODULES)) {
+  console.log('✅ bot/node_modules already exists. Skipping install.');
   process.exit(0);
 }
 
 console.log('⚙️ Installing bot dependencies...');
 
+const { execSync } = require('child_process');
+
 try {
-  execSync('cd bot && npm install', { stdio: 'inherit' });
-  
-  // Create lock file
-  fs.writeFileSync(installLock, `Installed at ${new Date().toISOString()}`);
-  console.log('✅ Bot dependencies installed successfully.');
+  execSync('npm install', {
+    cwd: BOT_DIR,
+    stdio: 'inherit', // show output for debugging
+  });
+  console.log('✅ Bot dependencies installed.');
 } catch (error) {
   console.error('❌ Failed to install bot dependencies:', error.message);
   process.exit(1);
