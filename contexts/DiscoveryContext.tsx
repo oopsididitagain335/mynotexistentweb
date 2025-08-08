@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getTrendingUsers, searchUsers, getUsersByBadge } from '@lib/discovery';
 
-// Define DiscoveryUser with all needed fields
+// ✅ Define the full DiscoveryUser interface locally to avoid import issues
 export interface DiscoveryUser {
   id: string;
   uid: string;
@@ -10,7 +10,7 @@ export interface DiscoveryUser {
   name: string;
   avatar: string;
   bio?: string;
-  category: string;
+  category: string; // ← This is required for filtering
   privacy: 'public' | 'followers' | 'friends' | 'hidden' | 'banned';
   template: string;
   darkMode: boolean;
@@ -20,8 +20,12 @@ export interface DiscoveryUser {
   followersCount: number;
   followingCount: number;
   badges: string[];
-  links?: Array<{ emoji: string; label: string; url: string }>;
-  __snapshot?: any;
+  links?: Array<{
+    emoji: string;
+    label: string;
+    url: string;
+  }>;
+  __snapshot?: any; // For pagination
 }
 
 interface FilterOptions {
@@ -78,6 +82,7 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
       setLoading(true);
       let data = await getTrendingUsers(20, lastDoc);
 
+      // ✅ Now safe — TypeScript knows `category` exists
       if (filters.category) {
         data = data.filter(u => u.category === filters.category);
       }
