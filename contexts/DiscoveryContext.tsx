@@ -2,7 +2,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getTrendingUsers, searchUsers, getUsersByBadge } from '@lib/discovery';
 
-// 🔥 Define locally — no imports, no conflicts
 export interface DiscoveryUser {
   id: string;
   uid: string;
@@ -23,9 +22,6 @@ export interface DiscoveryUser {
   links?: Array<{ emoji: string; label: string; url: string }>;
   __snapshot?: any;
 }
-
-// 🔧 Tell TypeScript: "Yes, this is our type"
-type SafeDiscoveryUser = Omit<DiscoveryUser, 'id'> & { id: string };
 
 interface FilterOptions {
   region?: string;
@@ -81,18 +77,28 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
       setLoading(true);
       let rawData = await getTrendingUsers(20, lastDoc);
 
-      // ✅ Cast to our local type — we control the schema
       const data: DiscoveryUser[] = rawData.map((item: any) => ({
-        ...item,
+        id: item.id || item.uid,
+        uid: item.uid,
+        username: item.username || 'unknown',
+        name: item.name || 'Unknown',
+        avatar: item.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anon',
+        bio: item.bio || '',
         category: item.category || 'Unknown',
-        badges: Array.isArray(item.badges) ? item.badges : [],
-        followersCount: item.followersCount || 0,
+        privacy: item.privacy || 'public',
+        template: item.template || 'minimal',
+        darkMode: !!item.darkMode,
+        banned: !!item.banned,
+        linked: !!item.linked,
         weeklyClicks: item.weeklyClicks || 0,
+        followersCount: item.followersCount || 0,
+        followingCount: item.followingCount || 0,
+        badges: Array.isArray(item.badges) ? item.badges : [],
+        links: Array.isArray(item.links) ? item.links : [],
       }));
 
-      // ✅ Now this will work — TypeScript knows `category` exists
       if (filters.category) {
-        const filtered = data.filter((u) => u.category === filters.category);
+        const filtered = data.filter(u => u.category === filters.category);
         setUsers(prev => (reset ? filtered : [...prev, ...filtered]));
       } else {
         setUsers(prev => (reset ? data : [...prev, ...data]));
@@ -117,7 +123,12 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
       setLoading(true);
       const results = await searchUsers(term);
       const typedResults: DiscoveryUser[] = results.map((item: any) => ({
-        ...item,
+        id: item.id || item.uid,
+        uid: item.uid,
+        username: item.username || 'unknown',
+        name: item.name || 'Unknown',
+        avatar: item.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anon',
+        bio: item.bio || '',
         category: item.category || 'Unknown',
         badges: Array.isArray(item.badges) ? item.badges : [],
       }));
