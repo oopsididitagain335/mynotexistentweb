@@ -2,13 +2,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getTrendingUsers, searchUsers, getUsersByBadge } from '@lib/discovery';
 
+// ✅ Full DiscoveryUser interface — matches Firestore
 export interface DiscoveryUser {
   id: string;
   uid: string;
   username: string;
   name: string;
   avatar: string;
-  bio?: string;
+  bio: string;
   category: string;
   privacy: 'public' | 'followers' | 'friends' | 'hidden' | 'banned';
   template: string;
@@ -19,12 +20,11 @@ export interface DiscoveryUser {
   followersCount: number;
   followingCount: number;
   badges: string[];
-  links?: Array<{ emoji: string; label: string; url: string }>;
+  links: Array<{ emoji: string; label: string; url: string }>;
   __snapshot?: any;
 }
 
 interface FilterOptions {
-  region?: string;
   category?: string;
   badge?: string;
   template?: string;
@@ -71,39 +71,46 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
       setHasMore(true);
     }
 
-    if (!hasMore && !reset) return;
+    if (!hasMore) return;
 
     try {
       setLoading(true);
       let rawData = await getTrendingUsers(20, lastDoc);
 
       const data: DiscoveryUser[] = rawData.map((item: any) => ({
-        id: item.id || item.uid,
-        uid: item.uid,
+        id: item.id || item.uid || '',
+        uid: item.uid || 'unknown',
         username: item.username || 'unknown',
-        name: item.name || 'Unknown',
+        name: item.name || item.username || 'Anonymous',
         avatar: item.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anon',
         bio: item.bio || '',
         category: item.category || 'Unknown',
         privacy: item.privacy || 'public',
         template: item.template || 'minimal',
-        darkMode: !!item.darkMode,
-        banned: !!item.banned,
-        linked: !!item.linked,
-        weeklyClicks: item.weeklyClicks || 0,
-        followersCount: item.followersCount || 0,
-        followingCount: item.followingCount || 0,
+        darkMode: Boolean(item.darkMode),
+        banned: Boolean(item.banned),
+        linked: Boolean(item.linked),
+        weeklyClicks: typeof item.weeklyClicks === 'number' ? item.weeklyClicks : 0,
+        followersCount: typeof item.followersCount === 'number' ? item.followersCount : 0,
+        followingCount: typeof item.followingCount === 'number' ? item.followingCount : 0,
         badges: Array.isArray(item.badges) ? item.badges : [],
         links: Array.isArray(item.links) ? item.links : [],
+        __snapshot: item.__snapshot || null,
       }));
 
+      // Apply filters
+      let filteredData = data;
       if (filters.category) {
-        const filtered = data.filter(u => u.category === filters.category);
-        setUsers(prev => (reset ? filtered : [...prev, ...filtered]));
-      } else {
-        setUsers(prev => (reset ? data : [...prev, ...data]));
+        filteredData = filteredData.filter(u => u.category === filters.category);
+      }
+      if (filters.badge) {
+        filteredData = filteredData.filter(u => u.badges.includes(filters.badge!));
+      }
+      if (filters.template) {
+        filteredData = filteredData.filter(u => u.template === filters.template);
       }
 
+      setUsers(prev => (reset ? filteredData : [...prev, ...filteredData]));
       setLastDoc(data.length ? data[data.length - 1].__snapshot : null);
       setHasMore(data.length >= 20);
     } catch (err) {
@@ -115,7 +122,7 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   const search = async (term: string) => {
-    if (!term) {
+    if (!term.trim()) {
       fetchUsers(true);
       return;
     }
@@ -123,19 +130,29 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
       setLoading(true);
       const results = await searchUsers(term);
       const typedResults: DiscoveryUser[] = results.map((item: any) => ({
-        id: item.id || item.uid,
-        uid: item.uid,
+        id: item.id || item.uid || '',
+        uid: item.uid || 'unknown',
         username: item.username || 'unknown',
-        name: item.name || 'Unknown',
+        name: item.name || item.username || 'Anonymous',
         avatar: item.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anon',
         bio: item.bio || '',
         category: item.category || 'Unknown',
+        privacy: item.privacy || 'public',
+        template: item.template || 'minimal',
+        darkMode: Boolean(item.darkMode),
+        banned: Boolean(item.banned),
+        linked: Boolean(item.linked),
+        weeklyClicks: typeof item.weeklyClicks === 'number' ? item.weeklyClicks : 0,
+        followersCount: typeof item.followersCount === 'number' ? item.followersCount : 0,
+        followingCount: typeof item.followingCount === 'number' ? item.followingCount : 0,
         badges: Array.isArray(item.badges) ? item.badges : [],
+        links: Array.isArray(item.links) ? item.links : [],
       }));
       setUsers(typedResults);
       setHasMore(false);
     } catch (err) {
       setError('Search failed');
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -161,7 +178,6 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
     fetchUsers,
     search,
     setFilters,
-    loadMore,
   };
 
   return <DiscoveryContext.Provider value={value}>{children}</DiscoveryContext.Provider>;
