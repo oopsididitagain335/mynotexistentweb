@@ -17,12 +17,12 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-mybio-light">
       <h1 className="text-5xl font-bold text-mybio-primary mb-4">mybio</h1>
-      <p className="text-lg text-gray-600 mb-8">Your link. Your identity.</p>
+      <p className="text-lg text-gray-600 mb-8">Claim your bio link. Own your identity.</p>
 
       <form onSubmit={handleSubmit} className="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg">
         <div className="flex items-center border-2 border-gray-300 rounded-lg overflow-hidden focus-within:border-mybio-primary">
           <span className="bg-gray-100 px-4 py-3 border-r border-gray-300 text-gray-500">
-            {window.location.host}/
+            {typeof window !== 'undefined' ? window.location.host : 'mybio.com'}/
           </span>
           <input
             type="text"
