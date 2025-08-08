@@ -1,4 +1,4 @@
-// contexts/
+// contexts/SecurityContext.tsx
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
 interface SecurityContextType {
@@ -17,8 +17,8 @@ const SecurityContext = createContext<SecurityContextType>({
 
 declare global {
   interface Window {
-    devtools: any;
-    __REACT_DEVTOOLS_GLOBAL_HOOK__: any;
+    devtools?: any;
+    __REACT_DEVTOOLS_GLOBAL_HOOK__?: any;
   }
 }
 
@@ -40,11 +40,9 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
     };
 
-    if (process.env.BLOCK_COPY_PASTE !== 'false') {
-      document.addEventListener('cut', handleCutCopyPaste);
-      document.addEventListener('copy', handleCutCopyPaste);
-      document.addEventListener('paste', handleCutCopyPaste);
-    }
+    document.addEventListener('cut', handleCutCopyPaste);
+    document.addEventListener('copy', handleCutCopyPaste);
+    document.addEventListener('paste', handleCutCopyPaste);
 
     return () => {
       document.removeEventListener('cut', handleCutCopyPaste);
@@ -53,24 +51,21 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({ children }
     };
   }, []);
 
-  // Block devtools open (basic)
+  // Detect devtools open
   useEffect(() => {
     const detect = () => {
       const threshold = 160;
       const width = window.outerWidth - window.innerWidth > threshold;
       const height = window.outerHeight - window.innerHeight > threshold;
       if (width || height) {
-        console.log('%cDevtools abuse violates ToS.', 'color: red; font-size: 18px; font-weight: bold;');
+        console.log('%c⚠️ Devtools abuse violates ToS.', 'color: red; font-size: 16px; font-weight: bold;');
         setIsSecure(false);
       }
     };
 
-    if (process.env.BLOCK_DEVTOOLS !== 'false') {
-      window.addEventListener('resize', detect);
-      window.addEventListener('focus', detect);
-    }
+    window.addEventListener('resize', detect);
+    window.addEventListener('focus', detect);
 
-    // F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U trap
     const blockKeys = (e: KeyboardEvent) => {
       if (
         e.key === 'F12' ||
@@ -92,7 +87,7 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({ children }
     };
   }, []);
 
-  // Disable right-click globally
+  // Disable right-click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       e.preventDefault();
@@ -103,7 +98,6 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, []);
 
   const detectSuspiciousActivity = () => {
-    // Can be extended with analytics
     console.warn('Suspicious interaction detected.');
   };
 
