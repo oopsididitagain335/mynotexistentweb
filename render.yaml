@@ -2,9 +2,11 @@
 services:
   - type: web
     name: thebiolink-lol
+    region: oregon
+    plan: free
     runtime: node
     buildCommand: "npm install"
-    startCommand: "npm run dev"
+    startCommand: "npm run start"
     envVars:
       - key: NEXT_PUBLIC_FIREBASE_API_KEY
       - key: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
@@ -15,17 +17,26 @@ services:
       - key: NEXT_PUBLIC_FIREBASE_APP_ID
       - key: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
       - key: NEXT_PUBLIC_APP_URL
+        value: https://thebiolink.lol  # Change to your custom domain or Render URL
       - key: RATE_LIMIT_WINDOW
+        value: "900"
       - key: RATE_LIMIT_MAX
+        value: "100"
       - key: BAN_THRESHOLD
+        value: "5"
       - key: BAN_DURATION
+        value: "3600"
       - key: MAINTENANCE_MODE
+        value: "false"
 
   - type: worker
     name: discord-bot
+    region: oregon
+    plan: free
     runtime: node
-    buildCommand: "cd bot && npm install"
-    startCommand: "node bot/index.js"
+    directory: bot
+    buildCommand: "npm install"
+    startCommand: "node index.js"
     envVars:
       - key: DISCORD_BOT_TOKEN
         fromFile: false
