@@ -1,0 +1,568 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== Base Theme Variables (Dark Mode Aware) ===== */
+@layer base {
+  :root {
+    --color-text: #111827;
+    --color-bg: #FFFFFF;
+    --color-card: #FFFFFF;
+    --color-border: #E5E7EB;
+    --color-accent: #7C3AED;
+    --color-accent-hover: #9333EA;
+    --color-danger: #EF4444;
+    --color-success: #10B981;
+    --color-warning: #F59E0B;
+    --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-glow: 0 0 15px rgba(124, 58, 237, 0.4);
+  }
+
+  .dark {
+    --color-text: #F9FAFB;
+    --color-bg: #111827;
+    --color-card: #1F2937;
+    --color-border: #374151;
+    --color-accent: #A78BFA;
+    --color-accent-hover: #C4B5FD;
+    --color-danger: #F87171;
+    --color-success: #34D399;
+    --color-warning: #FBBF24;
+    --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    --shadow-glow: 0 0 20px rgba(167, 139, 250, 0.5);
+  }
+
+  /* Global body reset */
+  body {
+    @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+    @apply font-sans antialiased;
+    @apply transition-colors duration-300 ease-in-out;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Enforce system fonts for performance and privacy */
+  body, button, input, select, textarea {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+/* ===== Component Layer: Reusable UI Styles for ALL Pages ===== */
+@layer components {
+  /* ===== Global Button Styles ===== */
+  .btn {
+    @apply px-5 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-60 disabled:cursor-not-allowed active:scale-98;
+  }
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary/90 dark:bg-secondary dark:hover:bg-secondary/90;
+  }
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600;
+  }
+  .btn-danger {
+    @apply bg-danger text-white hover:bg-danger/90;
+  }
+  .btn-outline {
+    @apply border border-current hover:bg-gray-100 dark:hover:bg-gray-800;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  /* ===== Input & Form Fields ===== */
+  .input, .textarea {
+    @apply px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600
+           bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+           focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-transparent
+           transition-colors w-full;
+  }
+  .textarea {
+    @apply w-full resize-y min-h-20;
+  }
+
+  /* Hidden input (for E2EE password entry) */
+  .hidden-input {
+    @apply absolute opacity-0 pointer-events-none h-0 w-0;
+  }
+
+  /* ===== Card Base ===== */
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-xl p-5 shadow-card border border-gray-200 dark:border-gray-700
+           transition-all duration-200;
+  }
+
+  /* Link Card (bio links) */
+  .link-card {
+    @apply p-4 my-2 rounded-xl bg-gray-50 dark:bg-gray-800/70 hover:bg-gray-100 dark:hover:bg-gray-700
+           transition-all duration-200 cursor-pointer flex items-center gap-3
+           border-l-4 border-primary hover:scale-102 active:scale-98;
+    transform: scale(1);
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium
+           bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200;
+  }
+  .badge-accent {
+    @apply bg-primary/15 text-primary dark:text-secondary;
+  }
+  .badge-success {
+    @apply bg-success/15 text-success;
+  }
+  .badge-warning {
+    @apply bg-warning/15 text-warning;
+  }
+  .badge-danger {
+    @apply bg-danger/15 text-danger;
+  }
+
+  /* Glowing Effect (Neon Theme) */
+  .glow {
+    @apply shadow-glow dark:shadow-glow text-white;
+  }
+
+  /* Retro Font Support */
+  .font-retro {
+    font-family: 'VT323', monospace;
+    letter-spacing: -0.5px;
+  }
+
+  /* Activity Post */
+  .activity-post {
+    @apply p-4 border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-900/50;
+  }
+  .activity-post p {
+    @apply mb-2;
+  }
+  .activity-post img {
+    @apply mt-2 rounded-lg max-h-60 object-cover;
+  }
+
+  /* Avatar */
+  .avatar {
+    @apply h-10 w-10 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-sm;
+  }
+  .avatar-lg {
+    @apply h-20 w-20 rounded-full;
+  }
+  .avatar-xl {
+    @apply h-24 w-24 rounded-full;
+  }
+
+  /* Follow Button */
+  .follow-btn {
+    @apply px-4 py-1.5 rounded-full text-sm font-medium border transition-all;
+  }
+  .follow-btn-following {
+    @apply bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200;
+  }
+  .follow-btn-follow {
+    @apply bg-primary text-white border-transparent hover:bg-primary/90;
+  }
+  .follow-btn-private {
+    @apply bg-gray-500 text-white border-transparent;
+  }
+
+  /* Message Bubble */
+  .msg-in {
+    @apply bg-gray-200 dark:bg-gray-700 ml-2 rounded-2xl px-4 py-2 max-w-xs self-start;
+  }
+  .msg-out {
+    @apply bg-primary text-white ml-auto rounded-2xl px-4 py-2 max-w-xs self-end;
+  }
+
+  /* SVG Badge Container */
+  .badge-svg-container {
+    @apply inline-block align-middle mx-1;
+  }
+
+  /* Theme Preview Card */
+  .theme-preview {
+    @apply border-2 rounded-lg p-3 cursor-pointer transition-all hover:scale-102;
+  }
+  .theme-preview.selected {
+    @apply border-primary ring-2 ring-primary/30;
+  }
+
+  /* Domain Input */
+  .domain-input {
+    @apply border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 w-full;
+  }
+
+  /* Bottom Navigation (PWA) */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex justify-around py-2 px-1 z-50 safe-bottom;
+  }
+  .bottom-nav-btn {
+    @apply flex flex-col items-center py-1.5 px-3 rounded-lg text-xs font-medium transition-all;
+  }
+  .bottom-nav-btn.active {
+    @apply text-primary;
+  }
+
+  /* Modal Overlay */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50;
+  }
+  .modal {
+    @apply bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl;
+  }
+
+  /* Loader */
+  .loader {
+    @apply w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto;
+  }
+
+  /* Empty State */
+  .empty-state {
+    @apply text-center py-10 text-gray-500 dark:text-gray-400;
+  }
+
+  /* Toast */
+  .toast {
+    @apply fixed top-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50;
+  }
+}
+
+/* ===== Utilities & Security Hardening (Global) ===== */
+@layer utilities {
+  /* Prevent selection & copy on sensitive fields */
+  .no-select, .protected-input, .no-copy {
+    -webkit-user-select: none;
+       -moz-user-select: none;
+        -ms-user-select: none;
+            user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+    pointer-events: auto;
+  }
+
+  /* Disable context menu (right-click) globally */
+  body.no-ctx {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+       -moz-user-select: none;
+        -ms-user-select: none;
+            user-select: none;
+  }
+
+  /* Invisible scrollbars (mobile PWA aesthetic) */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Haptic feedback trigger (CSS-only hint) */
+  .haptic {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Safe areas for mobile (iPhone, Android) */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-edges {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+             env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  /* Clickable overlay for touch */
+  .click-overlay {
+    @apply absolute inset-0 z-10 bg-transparent;
+  }
+
+  /* Fade-in animation for profile load */
+  .fade-in {
+    animation: fade-in 0.6s ease-out forwards;
+  }
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Pulse for active status */
+  .pulse {
+    @apply animate-pulse;
+  }
+
+  /* Full height screen */
+  .screen {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+  .screen-body {
+    min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+
+  /* Responsive text */
+  .text-heading {
+    @apply text-2xl md:text-3xl font-bold;
+  }
+  .text-subhead {
+    @apply text-lg md:text-xl text-gray-700 dark:text-gray-300;
+  }
+
+  /* Truncate long text */
+  .truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Print Safety */
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    .print-only {
+      display: block !important;
+    }
+  }
+}
+
+/* ===== Page-Specific Styles (Predictive) ===== */
+
+/* ===== Home Page (/) ===== */
+.page-home {
+  @apply container mx-auto px-4 py-6 safe-edges;
+}
+.hero {
+  @apply text-center py-10;
+}
+.hero h1 {
+  @apply text-3xl md:text-5xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
+}
+.hero p {
+  @apply text-lg text-gray-600 dark:text-gray-400 mt-4;
+}
+
+/* ===== Public Profile ([username]) ===== */
+.page-profile {
+  @apply container mx-auto px-4 py-6 safe-edges;
+}
+.profile-header {
+  @apply text-center mb-6;
+}
+.profile-avatar {
+  @apply mx-auto mb-4;
+}
+.profile-name {
+  @apply text-2xl font-bold;
+}
+.profile-bio {
+  @apply text-gray-600 dark:text-gray-400 mb-4;
+}
+.profile-links {
+  @apply space-y-3;
+}
+.profile-footer {
+  @apply mt-8 text-center text-sm text-gray-500 dark:text-gray-500;
+}
+
+/* ===== Login / Signup Pages ===== */
+.page-auth {
+  @apply screen flex items-center justify-center safe-edges p-6;
+}
+.auth-card {
+  @apply card w-full max-w-md mx-auto;
+}
+.auth-title {
+  @apply text-2xl font-bold text-center mb-6;
+}
+.auth-footer {
+  @apply text-center mt-4 text-sm text-gray-500 dark:text-gray-400;
+}
+
+/* ===== Dashboard Layout ===== */
+.page-dashboard {
+  @apply safe-edges min-h-screen bg-gray-50 dark:bg-gray-900;
+}
+.dashboard-container {
+  @apply container mx-auto px-4 py-6;
+}
+.dashboard-header {
+  @apply mb-6;
+}
+.dashboard-title {
+  @apply text-2xl font-bold;
+}
+
+/* ===== Dashboard: Messages ===== */
+.page-messages {
+  @apply flex flex-col h-96 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden;
+}
+.msg-header {
+  @apply p-3 border-b bg-white dark:bg-gray-700;
+}
+.msg-body {
+  @apply flex-1 p-3 overflow-y-auto;
+}
+.msg-footer {
+  @apply p-3 border-t bg-white dark:bg-gray-700 flex gap-2;
+}
+
+/* ===== Dashboard: Badges ===== */
+.page-badges {
+  @apply grid grid-cols-2 sm:grid-cols-3 gap-4;
+}
+.badge-item {
+  @apply card flex flex-col items-center p-4;
+}
+.badge-img {
+  @apply w-24 h-24 object-contain mb-2;
+}
+
+/* ===== Dashboard: Templates ===== */
+.page-templates {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6;
+}
+
+/* ===== Dashboard: Domain ===== */
+.page-domain {
+  @apply space-y-6;
+}
+.domain-section {
+  @apply card;
+}
+.domain-instructions {
+  @apply text-sm text-gray-600 dark:text-gray-400 mt-2;
+}
+
+/* ===== Discover & Search ===== */
+.page-discover, .page-search {
+  @apply container mx-auto px-4 py-6;
+}
+.discover-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6;
+}
+.discover-card {
+  @apply card flex flex-col items-center text-center;
+}
+
+/* ===== Activity Feed ===== */
+.page-activity {
+  @apply space-y-4;
+}
+
+/* ===== Banned / Unbanned Pages ===== */
+.page-banned, .page-unbanned {
+  @apply screen flex items-center justify-center text-center px-6 safe-edges;
+}
+.banned-content {
+  @apply card max-w-md mx-auto p-8;
+}
+.banned-title {
+  @apply text-3xl font-bold mb-4;
+}
+.banned-text {
+  @apply text-gray-600 dark:text-gray-400 mb-6;
+}
+
+/* ===== Maintenance Mode ===== */
+.page-maintenance {
+  @apply screen flex items-center justify-center text-center p-6;
+}
+
+/* ===== Mobile PWA Bottom Nav ===== */
+.bottom-nav {
+  @apply fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex justify-around py-2 px-1 z-50 safe-bottom;
+}
+.bottom-nav-btn {
+  @apply flex flex-col items-center py-1.5 px-3 rounded-lg text-xs font-medium transition-all;
+}
+.bottom-nav-btn.active {
+  @apply text-primary;
+}
+.bottom-nav-btn i {
+  @apply text-lg mb-1;
+}
+
+/* ===== E2EE Modal ===== */
+.e2ee-modal {
+  @apply modal-overlay;
+}
+.e2ee-content {
+  @apply bg-white dark:bg-gray-800 rounded-xl p-6 max-w-xs w-full;
+}
+.e2ee-title {
+  @apply font-bold text-lg mb-4;
+}
+.e2ee-input {
+  @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg mb-4;
+}
+
+/* ===== SVG Badge Styling (Dynamic) ===== */
+.badge-svg {
+  @apply h-8 max-w-full inline-block;
+}
+
+/* ===== Loading States ===== */
+.skeleton {
+  @apply animate-pulse bg-gray-200 dark:bg-gray-700 rounded;
+}
+.skeleton-text {
+  @apply h-4 rounded mb-2;
+}
+.skeleton-avatar {
+  @apply h-10 w-10 rounded-full;
+}
+.skeleton-card {
+  @apply p-4 rounded-xl bg-gray-100 dark:bg-gray-800;
+}
+
+/* ===== Responsive Adjustments ===== */
+@media (max-width: 640px) {
+  .link-card {
+    @apply py-3.5;
+  }
+  .btn {
+    @apply px-4 py-2 text-sm;
+  }
+  .card {
+    @apply p-4;
+  }
+  .text-heading {
+    @apply text-xl;
+  }
+  .profile-name {
+    @apply text-xl;
+  }
+}
+
+/* ===== Dynamic Theme Injection (via JS) ===== */
+/* This will be toggled by ThemeContext */
+html:not(.dark) {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+
+/* ===== Print Safety ===== */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+}
+
+/* ===== Devtools Trap (Passive-Aggressive) ===== */
+/* Optional: log trap */
+body::after {
+  display: none;
+  content: "⚠️ Unauthorized access, tampering, or automation violates thebiolink.lol ToS. Your session is logged.";
+}
