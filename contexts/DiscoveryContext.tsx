@@ -1,7 +1,28 @@
 // contexts/DiscoveryContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getTrendingUsers, searchUsers, getUsersByBadge } from '@lib/discovery';
-import type { DiscoveryUser } from '@lib/discovery';
+
+// Define DiscoveryUser with all needed fields
+export interface DiscoveryUser {
+  id: string;
+  uid: string;
+  username: string;
+  name: string;
+  avatar: string;
+  bio?: string;
+  category: string;
+  privacy: 'public' | 'followers' | 'friends' | 'hidden' | 'banned';
+  template: string;
+  darkMode: boolean;
+  banned: boolean;
+  linked: boolean;
+  weeklyClicks: number;
+  followersCount: number;
+  followingCount: number;
+  badges: string[];
+  links?: Array<{ emoji: string; label: string; url: string }>;
+  __snapshot?: any;
+}
 
 interface FilterOptions {
   region?: string;
@@ -57,7 +78,6 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
       setLoading(true);
       let data = await getTrendingUsers(20, lastDoc);
 
-      // Apply filters client-side
       if (filters.category) {
         data = data.filter(u => u.category === filters.category);
       }
