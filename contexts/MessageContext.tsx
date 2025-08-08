@@ -3,7 +3,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useAuth } from './AuthContext';
 import { db } from '@lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
-import type { User } from '../../pages/api/user/types';
 
 interface Message {
   id: string;
@@ -86,51 +85,57 @@ export const MessageProvider: React.FC<{ children: ReactNode }> = ({ children })
   }, [currentUser]);
 
   const decryptInbox = async (password: string) => {
-    if (!userProfile?.privateKeyEncrypted) return;
-
-    const { encrypted, salt, nonce } = userProfile.privateKeyEncrypted;
-    const privateKey = await import('libsodium-wrappers')
-      .then(sodium => sodium.ready.then(() => sodium))
-      .then(sodium => {
-        const key = sodium.crypto_pwhash(
-          32,
-          password,
-          sodium.from_base64(salt),
-          sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE,
-          sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE,
-          sodium.crypto_pwhash_ALG_DEFAULT
-        );
-        const decrypted = sodium.crypto_secretbox_open_easy(
-          sodium.from_base64(encrypted),
-          sodium.from_base64(nonce),
-          key
-        );
-        return decrypted ? Buffer.from(decrypted).toString('utf8') : null;
-      });
-
-    if (!privateKey) {
-      throw new Error('Invalid password');
+    if (!userProfile?.privateKeyEncrypted) {
+      throw new Error('No encrypted private key found.');
     }
 
-    const decrypted = await Promise.all(
-      inbox.map(async (msg): Promise<DecryptedMessage> => {
-        const plaintext = await import('libsodium-wrappers')
-          .then(sodium => sodium.ready.then(() => sodium))
-          .then(sodium => {
+    const { encrypted, salt, nonce } = userProfile.privateKeyEncrypted;
+
+    try {
+      const sodium = await import('libsodium-wrappers');
+      await sodium.ready;
+
+      const key = sodium.crypto_pwhash(
+        32,
+        password,
+        sodium.from_base64(salt),
+        sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE,
+        sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE,
+        sodium.crypto_pwhash_ALG_DEFAULT
+      );
+
+      const decrypted = sodium.crypto_secretbox_open_easy(
+        sodium.from_base64(encrypted),
+        sodium.from_base64(nonce),
+        key
+      );
+
+      if (!decrypted) {
+        throw new Error('Invalid password');
+      }
+
+      const privateKey = sodium.to_base64(decrypted);
+
+      const decryptedMessages = await Promise.all(
+        inbox.map(async (msg): Promise<DecryptedMessage> => {
+          try {
             const c = sodium.from_base64(msg.ciphertext);
             const epk = sodium.from_base64(msg.ephemeralPublicKey);
             const n = sodium.from_base64(msg.nonce);
             const sk = sodium.from_base64(privateKey);
             const plain = sodium.crypto_box_open_easy(c, n, epk, sk);
-            return plain ? Buffer.from(plain).toString('utf8') : '❌ Failed to decrypt';
-          })
-          .catch(() => '❌ Decryption error');
+            const plaintext = plain ? Buffer.from(plain).toString('utf8') : '❌ Failed to decrypt';
+            return { ...msg, plaintext };
+          } catch {
+            return { ...msg, plaintext: '❌ Decryption error' };
+          }
+        })
+      );
 
-        return { ...msg, plaintext };
-      })
-    );
-
-    setDecryptedInbox(decrypted);
+      setDecryptedInbox(decryptedMessages);
+    } catch (err) {
+      throw new Error('Invalid password');
+    }
   };
 
   const markAsRead = async (id: string) => {
