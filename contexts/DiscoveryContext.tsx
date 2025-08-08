@@ -40,7 +40,7 @@ interface DiscoveryContextType {
   fetchUsers: (reset?: boolean) => Promise<void>;
   search: (term: string) => Promise<void>;
   setFilters: (filters: FilterOptions) => void;
-  loadMore: () => void;
+  loadMore: () => void; // ← Required
 }
 
 const DiscoveryContext = createContext<DiscoveryContextType>({
@@ -53,7 +53,7 @@ const DiscoveryContext = createContext<DiscoveryContextType>({
   fetchUsers: async () => {},
   search: async () => {},
   setFilters: () => {},
-  loadMore: () => {},
+  loadMore: () => {}, // ← Must be initialized
 });
 
 export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -77,7 +77,7 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
       setLoading(true);
       let rawData = await getTrendingUsers(20, lastDoc);
 
-      const data: DiscoveryUser[] = rawData.map((item: any) => ({
+      const  DiscoveryUser[] = rawData.map((item: any) => ({
         id: item.id || item.uid || '',
         uid: item.uid || 'unknown',
         username: item.username || 'unknown',
@@ -168,7 +168,8 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
     fetchUsers(true);
   }, [filters]);
 
-  const value = {
+  // ✅ Fixed: `loadMore` is now included in `value`
+  const value: DiscoveryContextType = {
     users,
     loading,
     error,
@@ -178,6 +179,7 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
     fetchUsers,
     search,
     setFilters,
+    loadMore, // ← Now included
   };
 
   return <DiscoveryContext.Provider value={value}>{children}</DiscoveryContext.Provider>;
