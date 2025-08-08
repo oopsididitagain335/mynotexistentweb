@@ -16,11 +16,9 @@ const config: Config = {
           hover: '#4f46e5',
           dark: '#1e293b',
           light: '#f8fafc',
+          gray: '#64748b',
         },
       },
-      boxShadow: {
-        input: '0 2px 8px rgba(0,0,0,0.08)',
-      }
     },
   },
   plugins: [],
