@@ -21,7 +21,7 @@ services:
       - key: NEXT_PUBLIC_FIREBASE_APP_ID
       - key: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
       - key: NEXT_PUBLIC_APP_URL
-        value: https://thebiolink.onrender.com
+        value: https://thebiolink-lol.onrender.com  # Change to your domain
       - key: RATE_LIMIT_WINDOW
         value: "900"
       - key: RATE_LIMIT_MAX
@@ -41,8 +41,10 @@ services:
     region: oregon
     directory: bot
     buildCommand: |
+      # Go to bot/ and install its dependencies
       cd /opt/render/project/src/bot && npm install
     startCommand: |
+      # Start the bot
       node index.js
     envVars:
       - key: DISCORD_BOT_TOKEN
