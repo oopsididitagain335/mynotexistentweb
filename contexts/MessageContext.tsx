@@ -4,6 +4,9 @@ import { useAuth } from './AuthContext';
 import { db } from '@lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
 
+// ✅ Top-level import (now safe thanks to .d.ts)
+import * as sodium from 'libsodium-wrappers';
+
 interface Message {
   id: string;
   senderId: string;
@@ -86,13 +89,13 @@ export const MessageProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const decryptInbox = async (password: string) => {
     if (!userProfile?.privateKeyEncrypted) {
-      throw new Error('No encrypted private key found.');
+      setError('No encrypted private key found.');
+      return;
     }
 
     const { encrypted, salt, nonce } = userProfile.privateKeyEncrypted;
 
     try {
-      const sodium = await import('libsodium-wrappers');
       await sodium.ready;
 
       const key = sodium.crypto_pwhash(
@@ -133,8 +136,9 @@ export const MessageProvider: React.FC<{ children: ReactNode }> = ({ children })
       );
 
       setDecryptedInbox(decryptedMessages);
-    } catch (err) {
-      throw new Error('Invalid password');
+      setError(null);
+    } catch (err: any) {
+      setError('Failed to decrypt: ' + err.message);
     }
   };
 
