@@ -1,18 +1,16 @@
 # render.yaml
 services:
-  # === WEB SERVICE: Next.js App (Frontend + API) ===
+  # === WEB SERVICE: Next.js App ===
   - type: web
     name: thebiolink-lol
     plan: free
     runtime: node
     region: oregon
     buildCommand: |
-      # Install root dependencies (Next.js, React, Firebase, etc.)
+      # Install dependencies and build using npx
       npm install
-
-      # Build the Next.js app for production
-      npm run build
-    startCommand: npm run start
+      npx next build
+    startCommand: npx next start
     envVars:
       - key: NEXT_PUBLIC_FIREBASE_API_KEY
       - key: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
@@ -23,7 +21,7 @@ services:
       - key: NEXT_PUBLIC_FIREBASE_APP_ID
       - key: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
       - key: NEXT_PUBLIC_APP_URL
-        value: https://thebiolink.onrender.com  # Change to your custom domain
+        value: https://thebiolink.onrender.com
       - key: RATE_LIMIT_WINDOW
         value: "900"
       - key: RATE_LIMIT_MAX
@@ -41,12 +39,10 @@ services:
     plan: free
     runtime: node
     region: oregon
-    directory: bot  # Ensures we're in /bot directory
+    directory: bot
     buildCommand: |
-      # Move to bot/ and install its dependencies
       cd /opt/render/project/src/bot && npm install
     startCommand: |
-      # Start the bot
       node index.js
     envVars:
       - key: DISCORD_BOT_TOKEN
