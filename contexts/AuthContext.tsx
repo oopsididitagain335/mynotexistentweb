@@ -4,7 +4,8 @@ import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { auth, db } from '@lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
-interface User {
+// Define the exact User interface as stored in Firestore
+export interface User {
   uid: string;
   email: string | null;
   username: string;
@@ -20,11 +21,23 @@ interface User {
   discord?: {
     id: string;
     username: string;
-  };
+  } | null;
   weeklyClicks: number;
   followersCount: number;
   followingCount: number;
   badges: string[];
+  publicKey: string;
+  privateKeyEncrypted: {
+    encrypted: string;
+    salt: string;
+    nonce: string;
+  } | null;
+  links: Array<{
+    emoji: string;
+    label: string;
+    url: string;
+  }>;
+  createdAt?: any; // Firestore Timestamp
 }
 
 interface AuthContextType {
@@ -61,15 +74,55 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
 
     try {
-      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-      if (userDoc.exists()) {
-        setUserProfile({ id: userDoc.id, ...userDoc.data() } as User);
-      } else {
+      const userDocRef = doc(db, 'users', currentUser.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (!userDocSnap.exists()) {
         setError('Profile not found.');
+        setUserProfile(null);
+        setLoading(false);
+        return;
       }
+
+      const data = userDocSnap.data();
+
+      // Validate required fields
+      if (!data.uid || !data.username || !data.email) {
+        setError('Profile data is invalid or incomplete.');
+        setLoading(false);
+        return;
+      }
+
+      // Build safe User object with defaults
+      const safeProfile: User = {
+        uid: data.uid,
+        email: data.email,
+        username: data.username,
+        name: data.name || data.username,
+        avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`,
+        bio: data.bio || '',
+        category: data.category || 'Creator',
+        privacy: data.privacy || 'public',
+        template: data.template || 'minimal',
+        darkMode: Boolean(data.darkMode),
+        banned: Boolean(data.banned),
+        linked: Boolean(data.linked),
+        discord: data.discord || null,
+        weeklyClicks: Number(data.weeklyClicks) || 0,
+        followersCount: Number(data.followersCount) || 0,
+        followingCount: Number(data.followingCount) || 0,
+        badges: Array.isArray(data.badges) ? data.badges : [],
+        publicKey: data.publicKey || '',
+        privateKeyEncrypted: data.privateKeyEncrypted || null,
+        links: Array.isArray(data.links) ? data.links : [],
+        createdAt: data.createdAt || null,
+      };
+
+      setUserProfile(safeProfile);
+      setError(null);
     } catch (err) {
+      console.error('Failed to load user profile:', err);
       setError('Failed to load profile.');
-      console.error(err);
     } finally {
       setLoading(false);
     }
