@@ -1,46 +1,38 @@
-// pages/api/discord/generate-token.ts
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { getAuth } from 'firebase/auth';
-import { db } from '@lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { useState } from 'react';
 
-// ✅ Safely import Node.js crypto
-function getCrypto() {
-  return require('crypto') as typeof import('crypto');
-}
+export default function GenerateToken() {
+  const [token, setToken] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-function generateLinkToken() {
-  const crypto = getCrypto();
-  const token = crypto.randomBytes(16).toString('hex'); // 32 chars
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-  return { token, expiresAt };
-}
+  async function handleGenerate() {
+    setLoading(true);
+    setError(null);
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+    try {
+      const res = await fetch('/api/discord/generate-token', { method: 'POST' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setToken(data.token);
+    } catch (e: any) {
+      setError(e.message || 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
   }
 
-  const auth = getAuth();
-  const user = auth.currentUser;
-
-  if (!user) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  try {
-    const { token, expiresAt } = generateLinkToken();
-
-    const tokenDocRef = doc(db, 'linkTokens', token);
-    await setDoc(tokenDocRef, {
-      userId: user.uid,
-      expiresAt,
-      used: false,
-    });
-
-    return res.status(200).json({ token, expiresAt: expiresAt.toISOString() });
-  } catch (error: any) {
-    console.error('Generate token error:', error);
-    return res.status(500).json({ error: 'Failed to generate token' });
-  }
+  return (
+    <div>
+      <h1>Generate Discord Token</h1>
+      <button onClick={handleGenerate} disabled={loading}>
+        {loading ? 'Generating...' : 'Generate Token'}
+      </button>
+      {token && (
+        <div>
+          <p>Token: <code>{token}</code></p>
+        </div>
+      )}
+      {error && <p style={{color: 'red'}}>Error: {error}</p>}
+    </div>
+  );
 }
