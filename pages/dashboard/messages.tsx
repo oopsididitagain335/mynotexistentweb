@@ -1,4 +1,3 @@
-// pages/dashboard/messages.tsx
 import React, { useState } from 'react';
 import Layout from '@components/Layout';
 import MessageList from '@components/MessageList';
@@ -54,7 +53,10 @@ const Messages: React.FC = () => {
           ) : (
             <>
               <MessageList
-                messages={decryptedInbox}
+                messages={decryptedInbox.map(msg => ({
+                  ...msg,
+                  plaintext: msg.plaintext ?? ''
+                }))}
                 currentUserId="TODO"
               />
               <MessageComposer onSend={() => {}} disabled />
