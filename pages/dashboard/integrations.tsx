@@ -1,11 +1,9 @@
-// pages/dashboard/integrations.tsx
 import React, { useState } from 'react';
 import Layout from '@components/Layout';
 import { useAuth } from '@contexts/AuthContext';
 import { db } from '@lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { generateLinkToken } from '@lib/tokens';
-import { sendEmail } from '@lib/email';
 
 const Integrations: React.FC = () => {
   const { userProfile } = useAuth();
@@ -20,11 +18,15 @@ const Integrations: React.FC = () => {
       expiresAt: new Date(Date.now() + 15 * 60 * 1000),
     });
 
-    await sendEmail({
-      to: userProfile!.email!,
-      subject: '🔐 Your Discord Link Token',
-      html: `<p>Your link token: <strong>${token}</strong></p>
-             <p>Use <code>/link ${token}</code> in Discord within 15 minutes.</p>`,
+    await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: userProfile!.email!,
+        subject: '🔐 Your Discord Link Token',
+        html: `<p>Your link token: <strong>${token}</strong></p>
+               <p>Use <code>/link ${token}</code> in Discord within 15 minutes.</p>`,
+      }),
     });
   };
 
