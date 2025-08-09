@@ -1,12 +1,14 @@
 // components/ProtectedInput.tsx
 import React from 'react';
 
+type InputType = 'text' | 'password' | 'email';
+
 interface ProtectedInputProps {
-  type?: 'text' | 'password';
+  type?: InputType;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
-  className?: string;
+  onKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 const ProtectedInput: React.FC<ProtectedInputProps> = ({
@@ -14,7 +16,7 @@ const ProtectedInput: React.FC<ProtectedInputProps> = ({
   value,
   onChange,
   placeholder,
-  className = '',
+  onKeyPress,
 }) => {
   return (
     <input
@@ -22,12 +24,9 @@ const ProtectedInput: React.FC<ProtectedInputProps> = ({
       value={value}
       onChange={onChange}
       placeholder={placeholder}
-      className={`protected-input input ${className}`}
-      onCopy={(e) => e.preventDefault()}
-      onCut={(e) => e.preventDefault()}
-      onPaste={(e) => e.preventDefault()}
-      onSelect={(e) => e.preventDefault()}
-      onContextMenu={(e) => e.preventDefault()}
+      autoComplete="off"
+      onKeyPress={onKeyPress}
+      className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400/50 focus:border-transparent transition-all duration-300"
     />
   );
 };
