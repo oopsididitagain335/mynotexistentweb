@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Layout from '@components/Layout';
 import Link from 'next/link';
 
 const Home: React.FC = () => {
   const [username, setUsername] = useState('');
+  const cursorGlowRef = useRef<HTMLDivElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -14,19 +15,19 @@ const Home: React.FC = () => {
 
   // Cursor glow follow effect
   useEffect(() => {
-    const cursorGlow = document.querySelector('.cursor-glow') as HTMLElement;
-    if (!cursorGlow) return;
+    const glow = cursorGlowRef.current;
+    if (!glow) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       requestAnimationFrame(() => {
-        cursorGlow.style.left = `${e.clientX}px`;
-        cursorGlow.style.top = `${e.clientY}px`;
-        cursorGlow.style.opacity = '0.3';
+        glow.style.left = `${e.clientX}px`;
+        glow.style.top = `${e.clientY}px`;
+        glow.style.opacity = '0.3';
       });
     };
 
     const handleMouseLeave = () => {
-      cursorGlow.style.opacity = '0';
+      glow.style.opacity = '0';
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -40,93 +41,106 @@ const Home: React.FC = () => {
 
   return (
     <Layout title="thebiolink.lol — Your Identity. Your Consequences." noNav>
-      <div className="page-home min-h-screen bg-black text-white overflow-hidden relative">
-        {/* Cursor Glow */}
-        <div className="cursor-glow fixed w-96 h-96 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-full pointer-events-none opacity-0 transition-opacity duration-500 blur-3xl z-0"></div>
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white relative overflow-hidden">
+        
+        {/* Cursor Glow Effect */}
+        <div
+          ref={cursorGlowRef}
+          className="cursor-glow fixed w-96 h-96 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-full pointer-events-none opacity-0 transition-opacity duration-500 blur-3xl z-0"
+        />
 
-        {/* Hero Section */}
-        <section className="flex flex-col items-center justify-center py-20 md:py-40 px-6">
-          <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6 text-center">
-            Everything you want,
+        {/* Main Content */}
+        <main className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 py-20 text-center">
+          
+          {/* Logo & Brand */}
+          <div className="flex items-center gap-2 mb-6 opacity-90">
+            <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M11.3 1.3a1 1 0 00-1.4 0l-4 4a1 1 0 101.4 1.4L10 4.05V15a1 1 0 102 0V4.05l2.7 2.65a1 1 0 001.4-1.4l-4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h1 className="text-xl font-bold">
+              <span className="text-white">the</span>
+              <span className="bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">biolink</span>
+              <span className="text-gray-500">.lol</span>
+            </h1>
+          </div>
+
+          {/* Hero Heading */}
+          <h2 className="text-3xl md:text-5xl lg:text-6xl font-black leading-tight mb-6 max-w-3xl">
+            Your identity.
             <br />
-            <span className="bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">right here.</span>
-          </h1>
-          <p className="text-lg md:text-xl text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed text-center">
-            thebiolink.lol is your go-to for modern, feature-rich bio links and fast, secure file hosting. Everything you need — right here.
+            <span className="bg-gradient-to-r from-green-400 to-teal-400 bg-clip-text text-transparent">
+              Your consequences.
+            </span>
+          </h2>
+
+          {/* Subtitle */}
+          <p className="text-lg text-gray-400 mb-10 max-w-xl leading-relaxed">
+            One link for everything. Bio links, file hosting, and analytics — all in one secure hub.
           </p>
 
           {/* Username Claim Form */}
-          <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4 max-w-md w-full">
-            <div className="w-full flex items-center border border-gray-600 rounded-full overflow-hidden bg-gray-900/70 backdrop-blur-sm">
-              <span className="px-5 py-4 text-green-400 text-sm font-mono bg-gray-800/70 border-r border-gray-600">
-                thebiolink.lol/
-              </span>
-              <input
-                type="text"
-                aria-label="Choose your username"
-                className="flex-1 outline-none px-5 py-4 bg-transparent text-white placeholder-gray-500 font-mono text-sm"
-                placeholder="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                spellCheck={false}
-                autoComplete="off"
-              />
+          <form onSubmit={handleSubmit} className="w-full max-w-md mx-auto mb-8">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 flex items-center border border-gray-700 rounded-full bg-gray-900/70 backdrop-blur-sm overflow-hidden focus-within:border-green-500 transition-colors">
+                <span className="px-5 py-4 text-green-400 text-sm font-mono bg-gray-800/70 border-r border-gray-700 whitespace-nowrap">
+                  thebiolink.lol/
+                </span>
+                <input
+                  type="text"
+                  aria-label="Choose your username"
+                  className="flex-1 outline-none px-5 py-4 bg-transparent text-white placeholder-gray-500 font-mono text-sm"
+                  placeholder="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  spellCheck={false}
+                  autoComplete="off"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={!username.trim()}
+                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:from-gray-700 disabled:to-gray-800 text-white font-bold rounded-full transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed shadow-lg hover:shadow-purple-500/20"
+              >
+                Claim →
+              </button>
             </div>
-            <button
-              type="submit"
-              disabled={!username.trim()}
-              className="w-full px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-full transition-all duration-300 transform hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Claim Now →
-            </button>
           </form>
 
-          <div className="mt-6 text-sm text-gray-400">
+          {/* Login Link */}
+          <p className="text-sm text-gray-500">
             Already have an account?{' '}
             <Link href="/login">
-              <a className="text-green-400 hover:underline transition-colors">Log in</a>
+              <a className="text-green-400 hover:underline font-medium transition-colors">
+                Log in
+              </a>
             </Link>
-          </div>
-        </section>
+          </p>
 
-        {/* Feature Mockups */}
-        <section className="mt-20 grid grid-cols-1 md:grid-cols-2 gap-10 max-w-6xl mx-auto px-6 pb-20">
-          {/* Laptop Mockup */}
-          <div className="relative group overflow-hidden rounded-2xl shadow-xl border border-gray-800 bg-gray-900/70 backdrop-blur-sm">
-            <img
-              src="https://source.unsplash.com/random/800x600/?dashboard"
-              alt="Dashboard Preview"
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="absolute inset-0 flex items-center justify-center text-white text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div>
-                <h3 className="text-xl font-bold mb-2">Your Dashboard</h3>
-                <p className="text-sm">Manage links, files, and analytics effortlessly.</p>
-              </div>
-            </div>
-          </div>
+        </main>
 
-          {/* Phone Mockup */}
-          <div className="relative group overflow-hidden rounded-2xl shadow-xl border border-gray-800 bg-gray-900/70 backdrop-blur-sm">
-            <img
-              src="https://source.unsplash.com/random/800x600/?mobile"
-              alt="Mobile Preview"
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="absolute inset-0 flex items-center justify-center text-white text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div>
-                <h3 className="text-xl font-bold mb-2">On-the-go Access</h3>
-                <p className="text-sm">Access your links and files anytime, anywhere.</p>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* Optional: Floating Shapes for Depth (Subtle) */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/4 left-10 w-32 h-32 bg-indigo-500/5 rounded-full blur-xl animate-pulse"></div>
+          <div className="absolute bottom-1/3 right-10 w-40 h-40 bg-purple-500/5 rounded-full blur-xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        </div>
+
+        {/* Global Styles */}
+        <style jsx>{`
+          .cursor-glow {
+            transform: translate(-50%, -50%);
+          }
+
+          @media (max-width: 640px) {
+            .flex-1 {
+              min-width: 0;
+            }
+          }
+        `}</style>
       </div>
     </Layout>
   );
 };
 
-// ✅ Only one default export — and it's at the end, alone
 export default Home;
