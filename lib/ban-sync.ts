@@ -4,7 +4,7 @@ import { sendEmail } from './email';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 /**
- * Sync Discord ban → Website
+ * Sync a ban from Discord to the website.
  */
 export const syncBanToWeb = async (discordId: string): Promise<void> => {
   const linkedRef = doc(db, 'linkedUsers', discordId);
@@ -25,9 +25,6 @@ export const syncBanToWeb = async (discordId: string): Promise<void> => {
     discord: null,
   });
 
-  // Revoke Firebase session
-  // (handled via Firebase Auth token revocation in auth system)
-
   await sendEmail({
     to: userData.email,
     subject: '🚫 You’ve been banned from thebiolink.lol',
@@ -42,7 +39,7 @@ export const syncBanToWeb = async (discordId: string): Promise<void> => {
 };
 
 /**
- * Sync Discord unban → Website
+ * Sync an unban from Discord to the website.
  */
 export const syncUnbanToWeb = async (discordId: string): Promise<void> => {
   const linkedRef = doc(db, 'linkedUsers', discordId);
@@ -52,13 +49,13 @@ export const syncUnbanToWeb = async (discordId: string): Promise<void> => {
 
   const userData = linkedSnap.data();
   const userRef = doc(db, 'users', userData.uid);
-  const prev = userData.previousPrivacy || 'public';
+  const prevPrivacy = userData.previousPrivacy || 'public';
 
   await updateDoc(userRef, {
     banned: false,
     bannedAt: null,
     bannedBy: null,
-    privacy: prev,
+    privacy: prevPrivacy,
     unBannedAt: new Date(),
   });
 
