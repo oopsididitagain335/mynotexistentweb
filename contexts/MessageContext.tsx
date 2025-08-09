@@ -1,10 +1,7 @@
-// contexts/MessageContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { db } from '@lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
-
-// ✅ Top-level import (now safe thanks to .d.ts)
 import * as sodium from 'libsodium-wrappers';
 
 interface Message {
@@ -102,9 +99,9 @@ export const MessageProvider: React.FC<{ children: ReactNode }> = ({ children })
         32,
         password,
         sodium.from_base64(salt),
-        sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE,
-        sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE,
-        sodium.crypto_pwhash_ALG_DEFAULT
+        (sodium as any).crypto_pwhash_OPSLIMIT_INTERACTIVE,
+        (sodium as any).crypto_pwhash_MEMLIMIT_INTERACTIVE,
+        (sodium as any).crypto_pwhash_ALG_DEFAULT
       );
 
       const decrypted = sodium.crypto_secretbox_open_easy(
