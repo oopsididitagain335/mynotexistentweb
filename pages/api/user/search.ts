@@ -43,58 +43,6 @@ export default async function handler(
 
   const { q } = req.query;
 
-  if (!q || typeof q !== 'string' || !q.trim()) {
-    return res.status(400).json({ error: 'Query parameter "q" is required' });
-  }
-
-  const searchTerm = q.trim().toLowerCase();
-
-  try {
-    const usersRef = collection(db, 'users');
-    const usersQuery = query(
-      usersRef,
-      where('privacy', '==', 'public'),
-      orderBy('username'),
-      limit(20)
-    );
-
-    const snapshot = await getDocs(usersQuery);
-    const users: UserData[] = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    } as UserData));
-
-    const results = users
-      .filter((user) => {
-        const searchable = [user.username, user.name, user.bio, user.category]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        return searchable.includes(searchTerm);
-      })
-      .map(({ password, privateKeyEncrypted, email, ...safe }) => ({
-        id: safe.id,
-        username: safe.username,
-        name: safe.name,
-        avatar: safe.avatar,
-        bio: safe.bio,
-        category: safe.category,
-        badges: safe.badges,
-        followersCount: safe.followersCount,
-        weeklyClicks: safe.weeklyClicks,
-      }));
-
-    return res.status(200).json(results);
-  } catch (error: any) {
-    console.error('Search API error:', error);
-    return res.status(500).json({ error: 'Failed to search users' });
-  }
-}  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const { q } = req.query;
-
   if (!q || typeof q !== 'string' || q.trim().length === 0) {
     return res.status(400).json({ error: 'Query parameter "q" is required' });
   }
@@ -120,7 +68,7 @@ export default async function handler(
     } as UserData));
 
     // 🔎 Filter users based on search term
-    const results = users
+    const results: PublicUser[] = users
       .filter(user => {
         const searchable = [
           user.username,
@@ -134,7 +82,6 @@ export default async function handler(
         return searchable.includes(searchTerm);
       })
       .map(({ password, privateKeyEncrypted, email, ...safe }) => ({
-        // ✅ Only return safe, public fields
         id: safe.id,
         username: safe.username,
         name: safe.name,
@@ -146,7 +93,6 @@ export default async function handler(
         weeklyClicks: safe.weeklyClicks,
       }));
 
-    // ✅ Return only public-safe user data
     return res.status(200).json(results);
   } catch (error: any) {
     console.error('Search error:', error);
