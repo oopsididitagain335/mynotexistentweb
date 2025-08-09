@@ -1,12 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Layout from '@components/Layout';
-import Link from 'next/link';
 
 const Home: React.FC = () => {
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  // For demo, simple submit handler
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      alert("Passwords don't match");
+      return;
+    }
+    // Proceed with signup logic
+    alert(`Signing up:\nUsername: ${username}\nEmail: ${email}`);
+  };
+
   return (
     <Layout title="thebiolink.lol — Your Identity. Your Consequences." noNav>
-      <div className="min-h-screen flex flex-col justify-center items-center px-4 text-center bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-        <h1 className="font-extrabold text-4xl sm:text-5xl leading-tight max-w-4xl mx-auto">
+      <main className="min-h-screen flex flex-col justify-center items-center bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-4">
+        <h1 className="font-extrabold text-4xl sm:text-5xl max-w-4xl text-center mb-10">
           <span className="text-purple-700 dark:text-purple-400">Your Link. Your Server. Your Identity.</span>
           <br />
           <span className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 font-medium">
@@ -14,134 +29,87 @@ const Home: React.FC = () => {
           </span>
         </h1>
 
-        <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
-          <Link href="/signup" passHref>
-            <a className="inline-block px-8 py-3 text-lg font-semibold rounded-lg bg-purple-700 text-white hover:bg-purple-800 focus:outline-none focus:ring-4 focus:ring-purple-300 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900 transition">
-              Get Started
-            </a>
-          </Link>
-          <Link href="/login" passHref>
-            <a className="inline-block px-8 py-3 rounded-lg border border-gray-500 text-gray-700 hover:bg-gray-100 dark:border-gray-400 dark:text-gray-300 dark:hover:bg-gray-700 transition">
-              Log In
-            </a>
-          </Link>
-        </div>
+        <form
+          onSubmit={handleSubmit}
+          className="w-full max-w-md bg-gray-50 dark:bg-gray-800 rounded-lg p-8 shadow-lg"
+        >
+          {/* URL input with prefix */}
+          <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-300" htmlFor="username">
+            Your URL
+          </label>
+          <div className="flex mb-6">
+            <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 text-gray-500 select-none">
+              thebiolink.lol/
+            </span>
+            <input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value.replace(/\s+/g, ''))}
+              placeholder="username"
+              required
+              minLength={3}
+              maxLength={30}
+              className="flex-grow rounded-r-md border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+            />
+          </div>
 
-        <div className="mt-16 text-sm text-gray-500 dark:text-gray-400">
+          {/* Email input */}
+          <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-300" htmlFor="email">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            required
+            className="w-full mb-6 rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+          />
+
+          {/* Password input */}
+          <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-300" htmlFor="password">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="********"
+            required
+            minLength={6}
+            className="w-full mb-6 rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+          />
+
+          {/* Confirm Password input */}
+          <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-300" htmlFor="confirmPassword">
+            Confirm Password
+          </label>
+          <input
+            id="confirmPassword"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="********"
+            required
+            minLength={6}
+            className="w-full mb-6 rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+          />
+
+          <button
+            type="submit"
+            className="w-full py-3 bg-purple-700 hover:bg-purple-800 focus:outline-none focus:ring-4 focus:ring-purple-300 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900 rounded-lg font-semibold text-white transition"
+          >
+            Get Started
+          </button>
+        </form>
+
+        <div className="mt-12 text-sm text-gray-500 dark:text-gray-400 text-center max-w-md">
           Built for creators, hackers, and digital citizens.
         </div>
-
-      <style jsx>{`
-        div {
-          min-height: 100vh;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          padding: 1rem;
-          text-align: center;
-          background-color: #fff;
-          color: #1a202c;
-        }
-        @media (prefers-color-scheme: dark) {
-          div {
-            background-color: #1a202c;
-            color: #e2e8f0;
-          }
-        }
-        h1 {
-          font-weight: 800;
-          font-size: 2.25rem;
-          line-height: 1.25;
-          max-width: 64rem;
-          margin-left: auto;
-          margin-right: auto;
-        }
-        @media (min-width: 640px) {
-          h1 {
-            font-size: 3rem;
-          }
-        }
-        h1 span:first-child {
-          color: #6b21a8;
-        }
-        @media (prefers-color-scheme: dark) {
-          h1 span:first-child {
-            color: #a78bfa;
-          }
-        }
-        h1 span:last-child {
-          font-size: 1.125rem;
-          font-weight: 500;
-          color: #718096;
-        }
-        @media (prefers-color-scheme: dark) {
-          h1 span:last-child {
-            color: #a0aec0;
-          }
-        }
-        .btn-primary {
-          display: inline-block;
-          padding: 0.75rem 2rem;
-          font-size: 1.125rem;
-          font-weight: 600;
-          border-radius: 0.5rem;
-          background-color: #6b21a8;
-          color: white;
-          transition: background-color 0.2s ease;
-          text-decoration: none;
-        }
-        .btn-primary:hover {
-          background-color: #581c87;
-        }
-        .btn-primary:focus {
-          outline: none;
-          box-shadow: 0 0 0 4px #c4b5fd;
-        }
-        @media (prefers-color-scheme: dark) {
-          .btn-primary {
-            background-color: #7c3aed;
-          }
-          .btn-primary:hover {
-            background-color: #6d28d9;
-          }
-          .btn-primary:focus {
-            box-shadow: 0 0 0 4px #5b21b6;
-          }
-        }
-        .btn-outline {
-          display: inline-block;
-          padding: 0.75rem 2rem;
-          border-radius: 0.5rem;
-          border: 1px solid #6b7280;
-          color: #4b5563;
-          text-decoration: none;
-          transition: background-color 0.2s ease;
-        }
-        .btn-outline:hover {
-          background-color: #f3f4f6;
-        }
-        @media (prefers-color-scheme: dark) {
-          .btn-outline {
-            border-color: #9ca3af;
-            color: #d1d5db;
-          }
-          .btn-outline:hover {
-            background-color: #374151;
-          }
-        }
-        .footer-text {
-          margin-top: 4rem;
-          font-size: 0.875rem;
-          color: #6b7280;
-        }
-        @media (prefers-color-scheme: dark) {
-          .footer-text {
-            color: #9ca3af;
-          }
-        }
-      `}</style>
-      </div>
+      </main>
     </Layout>
   );
 };
