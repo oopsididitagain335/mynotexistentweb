@@ -1,4 +1,4 @@
-// [username].tsx
+// pages/[username].tsx
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@contexts/AuthContext';
@@ -23,42 +23,58 @@ const ProfilePage: React.FC = () => {
   }, [username]);
 
   const fetchProfile = async () => {
+    if (!username || typeof username !== 'string') return;
+
     try {
-      const userDoc = await getDoc(doc(db, 'users', String(username)));
+      const userDoc = await getDoc(doc(db, 'users', username));
       if (userDoc.exists()) {
         const data = userDoc.data();
+
         // Privacy tier check
         if (data.privacy === 'banned') {
           router.push('/banned');
           return;
         }
+
         if (data.privacy === 'followers' && !isFollowing(data.username)) {
-          // Show teaser
+          // Show teaser or limited view
         }
+
         if (data.privacy === 'friends' && !isFriend(data.username)) {
-          // Block
+          // Block access
           return;
         }
+
         setProfile(data);
       } else {
         router.push('/404');
       }
     } catch (err) {
-      console.error(err);
+      console.error('Failed to load profile:', err);
     } finally {
       setLoading(false);
     }
   };
 
   const isFollowing = (user: string) => {
-    return currentUserProfile?.following?.includes(user);
+    // ✅ Always return boolean
+    return currentUserProfile?.following?.includes?.(user) ?? false;
   };
 
   const isFriend = (user: string) => {
-    return currentUserProfile?.friends?.includes(user) && profile?.friends?.includes(currentUserProfile.username);
+    const isFriend1 = currentUserProfile?.friends?.includes?.(user) ?? false;
+    const isFriend2 = profile?.friends?.includes?.(currentUserProfile?.username) ?? false;
+    return isFriend1 && isFriend2;
   };
 
-  if (loading) return <Layout><div className="skeleton-card m-4"></div></Layout>;
+  if (loading) {
+    return (
+      <Layout noNav>
+        <div className="skeleton-card m-4"></div>
+      </Layout>
+    );
+  }
+
   if (!profile) return null;
 
   return (
@@ -70,8 +86,8 @@ const ProfilePage: React.FC = () => {
           username={profile.username}
           bio={profile.bio}
           followers={profile.followersCount}
-          following={isFollowing(profile.username)}
-          onFollow={() => {}} // TODO: API call
+          following={isFollowing(profile.username)} // ✅ Now guaranteed boolean
+          onFollow={() => {}} // TODO: Implement follow API
         />
 
         <div className="mt-6">
