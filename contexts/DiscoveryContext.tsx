@@ -1,108 +1,32 @@
-import {
-  collection,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-  where,
-  startAfter,
-  DocumentSnapshot,
-} from 'firebase/firestore';
-import { db } from './firebase';
+import React, { createContext, useContext, ReactNode, useState } from 'react';
 
-// Integrated User type
-export interface User {
-  id?: string;
-  uid: string;
-  username: string;
-  name: string;
-  avatar?: string;
-  bio?: string;
-  category?: string;
-  privacy: 'public' | 'followers' | 'friends' | 'hidden' | 'banned';
-  template?: string;
-  darkMode?: boolean;
-  banned?: boolean;
-  linked?: boolean;
-  weeklyClicks?: number;
-  followersCount?: number;
-  followingCount?: number;
-  badges?: string[];
-  links?: Array<{ emoji: string; label: string; url: string }>;
-  __snapshot?: any;
+interface DiscoveryContextType {
+  search: (query: string) => void;
+  results: any[]; // You can type this properly if you want
 }
 
-const COLLECTION = 'users';
+const DiscoveryContext = createContext<DiscoveryContextType | undefined>(undefined);
 
-/** Get trending users */
-export const getTrendingUsers = async (
-  limitCount = 20,
-  lastDoc?: DocumentSnapshot<User> | null
-) => {
-  let q = query(
-    collection(db, COLLECTION),
-    where('privacy', '==', 'public'),
-    orderBy('weeklyClicks', 'desc'),
-    limit(limitCount)
+export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [results, setResults] = useState<any[]>([]);
+
+  const search = (query: string) => {
+    console.log('Searching:', query);
+    // TODO: implement actual search logic here, maybe call your API
+    setResults([{ id: 1, name: 'Dummy result for ' + query }]);
+  };
+
+  return (
+    <DiscoveryContext.Provider value={{ search, results }}>
+      {children}
+    </DiscoveryContext.Provider>
   );
+};
 
-  if (lastDoc) {
-    q = query(
-      collection(db, COLLECTION),
-      where('privacy', '==', 'public'),
-      orderBy('weeklyClicks', 'desc'),
-      startAfter(lastDoc),
-      limit(limitCount)
-    );
+export const useDiscovery = (): DiscoveryContextType => {
+  const context = useContext(DiscoveryContext);
+  if (!context) {
+    throw new Error('useDiscovery must be used within a DiscoveryProvider');
   }
-
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    ...(doc.data() as User),
-    id: doc.id,
-    __snapshot: doc,
-  }));
-};
-
-/** Search users by username or name */
-export const searchUsers = async (term: string) => {
-  if (!term.trim()) return [];
-
-  const q = query(
-    collection(db, COLLECTION),
-    where('privacy', '==', 'public'),
-    orderBy('username'),
-    limit(50)
-  );
-
-  const snapshot = await getDocs(q);
-  return snapshot.docs
-    .map(doc => ({
-      ...(doc.data() as User),
-      id: doc.id,
-      __snapshot: doc,
-    }))
-    .filter(
-      user =>
-        user.username?.toLowerCase().includes(term.toLowerCase()) ||
-        user.name?.toLowerCase().includes(term.toLowerCase())
-    );
-};
-
-/** Get users that have a specific badge */
-export const getUsersByBadge = async (badge: string) => {
-  const q = query(
-    collection(db, COLLECTION),
-    where('privacy', '==', 'public'),
-    where('badges', 'array-contains', badge),
-    orderBy('weeklyClicks', 'desc'),
-    limit(20)
-  );
-
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    ...(doc.data() as User),
-    id: doc.id,
-    __snapshot: doc,
-  }));
+  return context;
 };
