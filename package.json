@@ -37,7 +37,8 @@
     "concurrently": "^8.2.0"
   },
   "_moduleAliases": {
-    "@": "."
+    "@": ".",
+    "@lib": "src/lib"
   },
   "browserslist": {
     "production": [
