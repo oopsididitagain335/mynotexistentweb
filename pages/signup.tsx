@@ -33,7 +33,6 @@ const Signup: React.FC = () => {
   // Effect to handle username from URL
   useEffect(() => {
     if (urlUsername && typeof urlUsername === 'string' && !formData.username) {
-      // Fix: Use explicit property assignment instead of shorthand
       setFormData(prev => ({ ...prev, username: urlUsername }));
       // If username is provided, skip to email step
       setCurrentStep('email');
@@ -134,7 +133,7 @@ const Signup: React.FC = () => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      console.log('Signup data:', formData);
+      console.log('Signup ', formData);
       
       // Redirect to login or dashboard on success
       router.push('/login?message=account_created');
@@ -158,7 +157,7 @@ const Signup: React.FC = () => {
   };
 
   // Handle key press (Enter)
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       handleNext();
     }
