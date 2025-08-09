@@ -1,4 +1,3 @@
-// pages/dashboard/analytics.tsx
 import React, { useEffect, useState } from 'react';
 import Layout from '@components/Layout';
 import AnalyticsChart from '@components/AnalyticsChart';
@@ -50,13 +49,13 @@ const Analytics: React.FC = () => {
 
   // Fallback static data (only for first-time users with no data)
   const fallbackData: ClickData[] = [
-    { date: 'Mon', clicks:  },
-    { date: 'Tue', clicks:  },
-    { date: 'Wed', clicks:  },
-    { date: 'Thu', clicks:  },
-    { date: 'Fri', clicks:  },
-    { date: 'Sat', clicks:  },
-    { date: 'Sun', clicks:  },
+    { date: 'Mon', clicks: 0 },
+    { date: 'Tue', clicks: 0 },
+    { date: 'Wed', clicks: 0 },
+    { date: 'Thu', clicks: 0 },
+    { date: 'Fri', clicks: 0 },
+    { date: 'Sat', clicks: 0 },
+    { date: 'Sun', clicks: 0 },
   ];
 
   // Format date (e.g., "2024-06-05" → "Wed")
