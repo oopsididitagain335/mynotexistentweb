@@ -1,28 +1,22 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React from 'react';
+import Layout from '@components/Layout';
+import SearchBar from '@components/SearchBar';
+import { useDiscovery } from '@contexts/DiscoveryContext'; // or correct relative path
+import { useRouter } from 'next/router';
 
-interface DiscoveryContextType {
-  search: (query: string) => void;
-}
-
-const DiscoveryContext = createContext<DiscoveryContextType | undefined>(undefined);
-
-export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const search = (query: string) => {
-    console.log('Search query:', query);
-    // Implement your actual search logic here
-  };
+const Search: React.FC = () => {
+  const { search } = useDiscovery();
+  const router = useRouter();
 
   return (
-    <DiscoveryContext.Provider value={{ search }}>
-      {children}
-    </DiscoveryContext.Provider>
+    <Layout title="Search — thebiolink.lol">
+      <div className="page-search">
+        <h2 className="text-2xl font-bold mb-4">Search Users</h2>
+        <SearchBar onSearch={search} />
+        {/* Display search results here */}
+      </div>
+    </Layout>
   );
 };
 
-export const useDiscovery = (): DiscoveryContextType => {
-  const context = useContext(DiscoveryContext);
-  if (!context) {
-    throw new Error('useDiscovery must be used within a DiscoveryProvider');
-  }
-  return context;
-};
+export default Search;
