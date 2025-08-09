@@ -2,6 +2,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '@lib/firebase';
+import { doc, setDoc } from 'firebase/firestore'; // ✅ Added setDoc
 import { generateKeyPair } from '@lib/crypto';
 import { sendEmail } from '@lib/email';
 import { isRateLimited } from '@lib/rate-limit';
@@ -27,6 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const keypair = generateKeyPair();
 
+    // ✅ Now works — setDoc is imported
     await setDoc(doc(db, 'users', user.uid), {
       uid: user.uid,
       email,
