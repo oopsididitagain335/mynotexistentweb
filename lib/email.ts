@@ -1,17 +1,25 @@
 // lib/email.ts
 import nodemailer from 'nodemailer';
 
+// Warn if email sending is disabled
 if (!process.env.EMAIL || !process.env.APP_PASSWORD) {
-  console.warn('⚠ Email sending is disabled: Missing EMAIL or APP_PASSWORD env variables.');
+  console.warn(
+    '⚠ Email sending is disabled: Missing EMAIL or APP_PASSWORD env variables.'
+  );
 }
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL,
-    pass: process.env.APP_PASSWORD,
-  },
-});
+// Initialize transporter only if credentials are available
+let transporter: any = null;
+
+if (process.env.EMAIL && process.env.APP_PASSWORD) {
+  transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL,
+      pass: process.env.APP_PASSWORD,
+    },
+  });
+}
 
 interface SendEmailOptions {
   to: string;
@@ -19,8 +27,16 @@ interface SendEmailOptions {
   html: string;
 }
 
-export const sendEmail = async ({ to, subject, html }: SendEmailOptions): Promise<void> => {
-  if (!process.env.EMAIL || !process.env.APP_PASSWORD) return;
+export const sendEmail = async ({
+  to,
+  subject,
+  html,
+}: SendEmailOptions): Promise<void> => {
+  // Exit early if credentials are missing
+  if (!transporter) {
+    console.error('❌ Cannot send email: Missing credentials.');
+    return;
+  }
 
   try {
     await transporter.sendMail({
@@ -31,6 +47,10 @@ export const sendEmail = async ({ to, subject, html }: SendEmailOptions): Promis
     });
     console.log(`📧 Email sent to ${to}`);
   } catch (error) {
+    // Log detailed error information
     console.error('📧 Failed to send email:', error);
+    if (error.response) {
+      console.error('Server response:', error.response);
+    }
   }
 };
