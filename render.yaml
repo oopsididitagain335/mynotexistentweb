@@ -21,7 +21,7 @@ services:
       - key: NEXT_PUBLIC_FIREBASE_APP_ID
       - key: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
       - key: NEXT_PUBLIC_APP_URL
-        value: https://thebiolink-lol.onrender.com  # Change to your domain
+        value: https://thebiolink.onrender.com  # Change to your domain
       - key: RATE_LIMIT_WINDOW
         value: "900"
       - key: RATE_LIMIT_MAX
