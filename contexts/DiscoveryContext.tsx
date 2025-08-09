@@ -1,7 +1,7 @@
 // @contexts/DiscoveryContext.tsx
 import { createContext, useContext, useState, ReactNode } from 'react';
 
-// 🔹 Define the public user shape
+// 🔹 Define the shape of a public user
 export interface PublicUser {
   id: string;
   username?: string;
@@ -22,7 +22,7 @@ export interface DiscoveryContextType {
   error: string | null;
 }
 
-// 🔹 Create context
+// 🔹 Create the context
 const DiscoveryContext = createContext<DiscoveryContextType | undefined>(undefined);
 
 // 🔹 Provider
@@ -50,7 +50,7 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
         throw new Error(`Search failed: ${res.status}`);
       }
 
-      // ✅ CORRECT: 'data' is the variable, typed as PublicUser[]
+      // ✅ CORRECT: Declare a variable called 'data' of type PublicUser[]
       const  PublicUser[] = await res.json();
 
       setResults(data);
