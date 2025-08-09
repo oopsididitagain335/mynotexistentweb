@@ -1,36 +1,50 @@
-// pages/api/message/inbox.ts
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '@lib/firebase';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+interface Message {
+  id: string;
+  content: string;
+  senderId: string;
+  timestamp: string;
+}
 
-  const { userId } = req.query;
+export default function Inbox({ userId }: { userId: string }) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!userId || typeof userId !== 'string') {
-    return res.status(400).json({ error: 'User ID is required' });
-  }
+  useEffect(() => {
+    async function fetchMessages() {
+      try {
+        const res = await fetch(`/api/message/inbox?userId=${encodeURIComponent(userId)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setMessages(data);
+      } catch (e: any) {
+        setError(e.message || 'Failed to load messages');
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  try {
-    const messagesRef = collection(db, 'messages');
-    const q = query(
-      messagesRef,
-      where('recipientId', '==', userId),
-      orderBy('timestamp', 'desc')
-    );
+    fetchMessages();
+  }, [userId]);
 
-    const snapshot = await getDocs(q);
-    const messages = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+  if (loading) return <p>Loading messages...</p>;
+  if (error) return <p style={{color: 'red'}}>Error: {error}</p>;
 
-    return res.status(200).json(messages);
-  } catch (error: any) {
-    console.error('Inbox fetch error:', error);
-    return res.status(500).json({ error: 'Failed to load messages' });
-  }
+  return (
+    <div>
+      <h1>Inbox for {userId}</h1>
+      {messages.length === 0 && <p>No messages</p>}
+      <ul>
+        {messages.map(msg => (
+          <li key={msg.id}>
+            <p><b>From:</b> {msg.senderId}</p>
+            <p>{msg.content}</p>
+            <small>{new Date(msg.timestamp).toLocaleString()}</small>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
