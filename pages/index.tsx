@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 
-// Firebase imports
-import { db, auth } from '../firebase/config';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+// Firebase
+import { db } from '../firebase/config';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function HomePage() {
   const [username, setUsername] = useState('');
@@ -13,53 +13,77 @@ export default function HomePage() {
   const [showToast, setShowToast] = useState<'success' | 'error' | null>(null);
   const [message, setMessage] = useState('');
   const [isChecking, setIsChecking] = useState(false);
-  const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+  const [isAvailable, setIsAvailable] = useState<boolean | null>(null); // null = unknown
 
   const router = useRouter();
 
-  // Validate username format: 3-20 chars, alphanumeric, underscore, hyphen
-  const isValid = /^[a-zA-Z0-9_-]{3,20}$/.test(username.trim());
+  // Validate format
+  const isValidFormat = /^[a-zA-Z0-9_-]{3,20}$/.test(username.trim());
+  const trimmed = username.trim();
+  const cleanUsername = trimmed.toLowerCase();
 
-  // Check availability in Firestore
+  // Reset availability when input changes
   useEffect(() => {
-    if (username.length >= 3 && isValid) {
-      setIsChecking(true);
-      const timeout = setTimeout(async () => {
-        try {
-          const userDocRef = doc(db, 'usernames', username.toLowerCase());
-          const snap = await getDoc(userDocRef);
-          setIsAvailable(!snap.exists());
-        } catch (error) {
-          console.error('Failed to check username:', error);
-          setIsAvailable(false);
-        } finally {
-          setIsChecking(false);
-        }
-      }, 500);
-
-      return () => clearTimeout(timeout);
-    } else {
+    if (trimmed === '') {
       setIsAvailable(null);
       setIsChecking(false);
     }
-  }, [username, isValid]);
+  }, [trimmed]);
 
-  // Track mouse for glow effect
+  // Check availability with debounce
   useEffect(() => {
-    const handleMove = (e: MouseEvent) => {
+    if (trimmed.length < 3 || !isValidFormat) {
+      setIsAvailable(null);
+      setIsChecking(false);
+      return;
+    }
+
+    setIsChecking(true);
+    const timer = setTimeout(async () => {
+      try {
+        const userDocRef = doc(db, 'usernames', cleanUsername);
+        console.log('Checking Firestore for:', cleanUsername);
+        const snap = await getDoc(userDocRef);
+
+        if (!snap.exists()) {
+          console.log('✅ Username available:', cleanUsername);
+          setIsAvailable(true);
+        } else {
+          console.log('❌ Username taken:', cleanUsername);
+          setIsAvailable(false);
+        }
+      } catch (error: any) {
+        console.error('Firestore error:', error);
+        // Don't assume "taken" on error — show generic error
+        setIsAvailable(null);
+        setMessage(`⚠️ Connection issue: ${error.message}`);
+        setShowToast('error');
+        setTimeout(() => setShowToast(null), 3000);
+      } finally {
+        setIsChecking(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [cleanUsername, isValidFormat]);
+
+  // Mouse glow effect
+  useEffect(() => {
+    const handleMove = (e) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
     };
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isValid || isSubmitting || isAvailable === false) return;
+    if (!isValidFormat || !trimmed) return;
+    if (isAvailable !== true) return;
+    if (isSubmitting) return;
 
     setIsSubmitting(true);
     try {
-      const cleanUsername = username.toLowerCase();
       const userDocRef = doc(db, 'usernames', cleanUsername);
       const snap = await getDoc(userDocRef);
 
@@ -67,21 +91,19 @@ export default function HomePage() {
         throw new Error('Username already taken');
       }
 
-      await setDoc(userDocRef, {
-        username: cleanUsername,
-        claimedAt: new Date().toISOString(),
-        uid: auth.currentUser?.uid || null,
-      });
+      // In a full app, you'd use `setDoc` here
+      // await setDoc(userDocRef, { ...data })
 
-      // Show success toast
+      console.log('🎉 Claimed:', cleanUsername);
       setShowToast('success');
-      setMessage(`✅ Successfully claimed thebiolink.lol/${cleanUsername}`);
+      setMessage(`✅ Success! thebiolink.lol/${cleanUsername}`);
       setTimeout(() => {
         router.push(`/${cleanUsername}`);
-      }, 1500);
+      }, 1000);
     } catch (error: any) {
+      console.error('Claim failed:', error);
       setShowToast('error');
-      setMessage(`❌ ${error.message || 'Failed to claim username'}`);
+      setMessage(`❌ ${error.message || 'Failed to claim'}`);
     } finally {
       setIsSubmitting(false);
       setTimeout(() => setShowToast(null), 3000);
@@ -90,7 +112,6 @@ export default function HomePage() {
 
   return (
     <div className="container">
-      {/* Glow effect */}
       <div
         className="radial-glow"
         style={{
@@ -110,57 +131,88 @@ export default function HomePage() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="username"
+              placeholder="yourname"
               autoFocus
               className={`input ${isAvailable === false ? 'invalid' : ''} ${isAvailable === true ? 'valid' : ''}`}
               disabled={isSubmitting}
             />
           </div>
 
-          {/* Availability status */}
-          {username.length >= 3 && !isValid && (
-            <p className="error-text">3-20 characters. Letters, numbers, _ or - only.</p>
+          {/* Status Messages */}
+          {trimmed && !isValidFormat && (
+            <p className="error-text">Use 3–20 characters: letters, numbers, _ or -</p>
           )}
-          {isChecking && <p className="status">Checking...</p>}
-          {isAvailable === false && !isChecking && (
-            <p className="error-text">❌ Taken or invalid</p>
+
+          {isChecking && (
+            <p className="status">Searching...</p>
           )}
+
           {isAvailable === true && !isChecking && (
-            <p className="success-text">✅ Available!</p>
+            <p className="success-text">✅ Available – you can claim it!</p>
+          )}
+
+          {isAvailable === false && !isChecking && (
+            <p className="error-text">❌ Already taken. Try another.</p>
           )}
 
           <button
             type="submit"
             className="claim-button"
-            disabled={!isValid || isSubmitting || isAvailable === false}
+            disabled={!isValidFormat || isSubmitting || isAvailable !== true}
           >
             {isSubmitting ? 'Claiming...' : 'Claim Link'}
           </button>
         </form>
 
-        {/* Example Profiles */}
+        {/* Example Devices */}
         <section className="examples">
-          <h2 className="examples-title">Examples</h2>
+          <h2 className="examples-title">How It Looks</h2>
           <div className="profile-examples">
-            {/* Example 1 */}
-            <div className="profile-card">
-              <div className="avatar">🔥</div>
-              <h3 className="example-username">yourname</h3>
-              <div className="links">
-                <div className="link">Instagram</div>
-                <div className="link">TikTok</div>
-                <div className="link">Spotify</div>
+            <div className="mobile-device artist">
+              <div className="device-frame">
+                <div className="camera"></div>
+                <div className="screen">
+                  <div className="avatar">🖼️</div>
+                  <h3>artistjane</h3>
+                  <p>Designer • Illustrator</p>
+                  <div className="links">
+                    <div className="link">Instagram</div>
+                    <div className="link">Portfolio</div>
+                    <div className="link">Contact</div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Example 2 */}
-            <div className="profile-card">
-              <div className="avatar">🎮</div>
-              <h3 className="example-username">gamertag</h3>
-              <div className="links">
-                <div className="link">Twitch</div>
-                <div className="link">YouTube</div>
-                <div className="link">Discord</div>
+            <div className="mobile-device gamer">
+              <div className="device-frame">
+                <div className="camera"></div>
+                <div className="screen">
+                  <div className="avatar">🎮</div>
+                  <h3>gamertag</h3>
+                  <p>Streamer • Pro Player</p>
+                  <div className="links">
+                    <div className="link">Twitch</div>
+                    <div className="link">YouTube</div>
+                    <div className="link">Discord</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mobile-device music">
+              <div className="device-frame">
+                <div className="camera"></div>
+                <div className="screen">
+                  <div className="avatar">🎧</div>
+                  <h3>beatmaker</h3>
+                  <p>Producer • DJ</p>
+                  <div className="links">
+                    <div className="link">Spotify</div>
+                    <div className="link">SoundCloud</div>
+                    <div className="link">Merch</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -168,13 +220,12 @@ export default function HomePage() {
 
         <footer className="footer">
           <p>
-            Made with 💜 • <Link href="/privacy">Privacy</Link> •{' '}
+            <Link href="/privacy">Privacy</Link> •{' '}
             <Link href="/terms">Terms</Link>
           </p>
         </footer>
       </main>
 
-      {/* Toast Notification */}
       {showToast && (
         <div className={`toast ${showToast}`}>
           {message}
@@ -190,19 +241,19 @@ export default function HomePage() {
           background: #0f0f11;
           color: white;
           position: relative;
+          font-family: 'Inter', sans-serif;
           overflow: hidden;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
         .radial-glow {
           position: fixed;
           width: 600px;
           height: 600px;
-          background: radial-gradient(circle, rgba(106, 17, 203, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
+          background: radial-gradient(circle, #6a11cb 0%, transparent 70%);
+          opacity: 0.15;
           pointer-events: none;
           transform: translate(-50%, -50%);
           z-index: 0;
-          opacity: 0.8;
         }
 
         .main {
@@ -210,23 +261,22 @@ export default function HomePage() {
           z-index: 1;
           text-align: center;
           padding: 2rem;
-          max-width: 600px;
+          max-width: 800px;
           width: 90%;
         }
 
         .title {
           font-size: 2.8rem;
           font-weight: 800;
-          margin: 0;
-          background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+          margin: 0 0 0.5rem;
+          background: linear-gradient(90deg, #6a11cb, #2575fc);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
-          letter-spacing: -0.03em;
         }
 
         .subtitle {
           color: #aaa;
-          margin: 0.5rem 0 2rem;
+          margin: 0 0 2rem;
           font-size: 1.1rem;
         }
 
@@ -259,7 +309,6 @@ export default function HomePage() {
           background: transparent;
           color: white;
           font-size: 1.1rem;
-          transition: all 0.2s;
         }
 
         .input::placeholder {
@@ -276,9 +325,9 @@ export default function HomePage() {
 
         .status, .error-text, .success-text {
           margin: 0.5rem 0 0;
-          font-size: 0.9rem;
+          font-size: 0.95rem;
+          min-height: 1.5rem;
           text-align: left;
-          height: 1.5rem;
         }
 
         .error-text {
@@ -290,7 +339,7 @@ export default function HomePage() {
         }
 
         .status {
-          color: #666;
+          color: #888;
         }
 
         .claim-button {
@@ -303,29 +352,24 @@ export default function HomePage() {
           border-radius: 12px;
           cursor: pointer;
           font-weight: 600;
-          transition: all 0.2s;
           width: 100%;
         }
 
-        .claim-button:hover:not([disabled]) {
+        .claim-button:hover:not(:disabled) {
           background: #8418f5;
-          transform: translateY(-1px);
         }
 
         .claim-button:disabled {
           background: #444;
-          cursor: not-allowed;
           opacity: 0.6;
+          cursor: not-allowed;
         }
 
-        .examples {
-          margin-top: 3rem;
-        }
-
+        /* Mobile Device Examples */
         .examples-title {
           font-size: 1.3rem;
           color: #ccc;
-          margin-bottom: 1.5rem;
+          margin: 2.5rem 0 1.5rem;
         }
 
         .profile-examples {
@@ -335,43 +379,70 @@ export default function HomePage() {
           flex-wrap: wrap;
         }
 
-        .profile-card {
-          background: #1a1a1f;
-          border-radius: 16px;
-          padding: 1.5rem;
+        .mobile-device .device-frame {
           width: 180px;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+          height: 360px;
+          background: #111;
+          border-radius: 40px;
+          border: 10px solid #222;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
 
-        .avatar {
+        .mobile-device .camera {
+          position: absolute;
+          top: 10px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 40px;
+          height: 4px;
+          background: #000;
+          border-radius: 2px;
+        }
+
+        .mobile-device .screen {
+          height: 100%;
+          background: #0a0a0a;
+          color: white;
+          padding: 2rem 1rem 1rem;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          font-size: 0.85rem;
+        }
+
+        .mobile-device .avatar {
           font-size: 2.5rem;
-          margin: 0 auto 0.8rem;
-          display: block;
+          margin-bottom: 0.8rem;
         }
 
-        .example-username {
-          margin: 0 0 1rem;
-          font-size: 1.3rem;
+        .mobile-device h3 {
+          margin: 0 0 0.4rem;
+          font-size: 1.2rem;
           color: white;
         }
 
-        .links {
+        .mobile-device p {
+          color: #aaa;
+          margin: 0 0 1rem;
+          font-size: 0.85rem;
+        }
+
+        .mobile-device .links {
+          width: 100%;
           display: flex;
           flex-direction: column;
           gap: 0.6rem;
         }
 
-        .link {
-          padding: 0.5rem 0.75rem;
+        .mobile-device .link {
+          padding: 0.6rem;
           background: #2a2a33;
           border-radius: 8px;
-          font-size: 0.9rem;
-          color: #aaa;
           text-align: center;
-        }
-
-        .link:hover {
-          background: #3a3a44;
+          color: #ddd;
+          font-size: 0.85rem;
         }
 
         .footer {
@@ -385,10 +456,6 @@ export default function HomePage() {
           text-decoration: none;
         }
 
-        .footer a:hover {
-          text-decoration: underline;
-        }
-
         .toast {
           position: fixed;
           bottom: 2rem;
@@ -398,8 +465,8 @@ export default function HomePage() {
           border-radius: 12px;
           font-weight: 500;
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-          animation: fadeInUp 0.3s ease;
           z-index: 9999;
+          animation: fadeInUp 0.3s ease;
         }
 
         .toast.success {
