@@ -4,19 +4,15 @@ import { getAuth } from 'firebase/auth';
 import { db } from '@lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
-// Generate a 32-character hex token
-function generateLinkToken() {
-  // Use Node.js crypto if available (during runtime)
-  if (typeof crypto !== 'undefined' && crypto?.randomBytes) {
-    const token = crypto.randomBytes(16).toString('hex'); // 32 chars
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-    return { token, expiresAt };
-  }
+// ✅ Safely import Node.js crypto
+function getCrypto() {
+  return require('crypto') as typeof import('crypto');
+}
 
-  // Fallback (not secure, for dev only)
-  console.warn('Crypto not available - using insecure fallback');
-  const token = Array(32).fill(0).map(() => Math.random().toString(36)[2]).join('');
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+function generateLinkToken() {
+  const crypto = getCrypto();
+  const token = crypto.randomBytes(16).toString('hex'); // 32 chars
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
   return { token, expiresAt };
 }
 
@@ -28,8 +24,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const auth = getAuth();
   const user = auth.currentUser;
 
-  // This is a simplified version — in practice, you'd verify auth via session or token
-  // For now, assume user is logged in via client
   if (!user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
