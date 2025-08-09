@@ -7,11 +7,12 @@ import {
   query,
   where,
   startAfter,
-  DocumentSnapshot,
+  QueryDocumentSnapshot,
+  DocumentData,
 } from 'firebase/firestore';
 import { db } from './firebase';
 
-// ✅ Define User interface to match Firestore schema
+// ✅ Define User interface exactly as stored in Firestore
 export interface User {
   username: string;
   name: string;
@@ -39,7 +40,7 @@ export interface User {
   linked?: boolean;
   previousPrivacy?: string;
   banned?: boolean;
-  bannedAt?: Date | null;
+  bannedAt?: any; // Firestore Timestamp
   bannedBy?: string | null;
   publicKey?: string;
   privateKeyEncrypted?: {
@@ -56,10 +57,13 @@ const COLLECTION = 'users';
  */
 export const getPublicProfiles = async (
   category?: string,
-  lastDoc?: DocumentSnapshot<User>
-): Promise<{ users: User[]; lastVisible: DocumentSnapshot<User> | null }> => {
+  lastDoc?: QueryDocumentSnapshot<User> | null
+): Promise<{
+  users: User[];
+  lastVisible: QueryDocumentSnapshot<User> | null;
+}> => {
   try {
-    // Base query: public profiles, sorted by weekly clicks
+    // Base query
     let q = query(
       collection(db, COLLECTION),
       where('privacy', '==', 'public'),
@@ -67,7 +71,7 @@ export const getPublicProfiles = async (
       limit(20)
     );
 
-    // Add category filter if provided
+    // Add category filter if needed
     if (category) {
       q = query(
         collection(db, COLLECTION),
@@ -78,7 +82,7 @@ export const getPublicProfiles = async (
       );
     }
 
-    // Add cursor pagination if lastDoc exists
+    // Add pagination cursor
     if (lastDoc) {
       q = query(q, startAfter(lastDoc));
     }
@@ -88,13 +92,20 @@ export const getPublicProfiles = async (
 
     snapshot.forEach((doc) => {
       const data = doc.data() as User;
-      // Ensure required fields exist
-      if (data.username && data.name) {
-        users.push(data);
+
+      // ✅ Validate required fields
+      if (!data.username || !data.name || !data.privacy) {
+        console.warn(`Invalid user data skipped: ${doc.id}`);
+        return;
       }
+
+      users.push(data);
     });
 
-    const lastVisible = !snapshot.empty ? snapshot.docs[snapshot.docs.length - 1] : null;
+    // ✅ Type assertion: we know this is a QueryDocumentSnapshot<User>
+    const lastVisible = !snapshot.empty
+      ? (snapshot.docs[snapshot.docs.length - 1] as QueryDocumentSnapshot<User>)
+      : null;
 
     return { users, lastVisible };
   } catch (error) {
@@ -104,7 +115,7 @@ export const getPublicProfiles = async (
 };
 
 /**
- * Search users by username, name, or bio (fuzzy match client-side)
+ * Search users by username, name, bio, or category (client-side fuzzy search)
  */
 export const searchUsers = async (term: string): Promise<User[]> => {
   if (!term.trim()) return [];
@@ -113,7 +124,6 @@ export const searchUsers = async (term: string): Promise<User[]> => {
     const q = query(collection(db, COLLECTION), where('privacy', '==', 'public'));
     const snapshot = await getDocs(q);
     const users: User[] = [];
-
     const searchStr = term.toLowerCase().trim();
 
     snapshot.forEach((doc) => {
@@ -134,7 +144,7 @@ export const searchUsers = async (term: string): Promise<User[]> => {
 };
 
 /**
- * Get users by badge (e.g. "Verified", "Trending")
+ * Get users who have a specific badge
  */
 export const getUsersByBadge = async (badge: string): Promise<User[]> => {
   try {
@@ -148,7 +158,7 @@ export const getUsersByBadge = async (badge: string): Promise<User[]> => {
 
     snapshot.forEach((doc) => {
       const data = doc.data() as User;
-      if (data.username && data.name) {
+      if (data.username && data.name && data.badges?.includes(badge)) {
         users.push(data);
       }
     });
