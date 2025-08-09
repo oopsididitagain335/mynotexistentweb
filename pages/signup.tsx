@@ -33,7 +33,8 @@ const Signup: React.FC = () => {
   // Effect to handle username from URL
   useEffect(() => {
     if (urlUsername && typeof urlUsername === 'string' && !formData.username) {
-      setFormData(prev => ({ ...prev, username }));
+      // Fix: Use explicit property assignment instead of shorthand
+      setFormData(prev => ({ ...prev, username: urlUsername }));
       // If username is provided, skip to email step
       setCurrentStep('email');
     }
@@ -131,7 +132,6 @@ const Signup: React.FC = () => {
     
     try {
       // Simulate API call
-      // In a real application, you would make an API request here
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       console.log('Signup data:', formData);
@@ -232,7 +232,7 @@ const Signup: React.FC = () => {
             <div className="space-y-6">
               {/* Username Step */}
               {currentStep === 'username' && (
-                <div className="animate-fadeIn">
+                <div>
                   <label className="block text-sm font-medium text-gray-300 mb-3">
                     Username
                   </label>
@@ -251,7 +251,7 @@ const Signup: React.FC = () => {
 
               {/* Email Step */}
               {currentStep === 'email' && (
-                <div className="animate-fadeIn">
+                <div>
                   <label className="block text-sm font-medium text-gray-300 mb-3">
                     Email Address
                   </label>
@@ -270,7 +270,7 @@ const Signup: React.FC = () => {
 
               {/* Password Step */}
               {currentStep === 'password' && (
-                <div className="animate-fadeIn">
+                <div>
                   <label className="block text-sm font-medium text-gray-300 mb-3">
                     Password
                   </label>
@@ -297,7 +297,7 @@ const Signup: React.FC = () => {
 
               {/* Confirm Password Step */}
               {currentStep === 'confirmPassword' && (
-                <div className="animate-fadeIn">
+                <div>
                   <label className="block text-sm font-medium text-gray-300 mb-3">
                     Confirm Password
                   </label>
@@ -352,24 +352,6 @@ const Signup: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Add CSS for animations */}
-      <style jsx>{`
-        .animate-fadeIn {
-          animation: fadeIn 0.5s ease-out;
-        }
-        
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </Layout>
   );
 };
