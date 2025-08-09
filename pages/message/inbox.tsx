@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface Message {
   id: string;
@@ -30,14 +30,14 @@ export default function Inbox({ userId }: { userId: string }) {
   }, [userId]);
 
   if (loading) return <p>Loading messages...</p>;
-  if (error) return <p style={{color: 'red'}}>Error: {error}</p>;
+  if (error) return <p style={{ color: 'red' }}>Error: {error}</p>;
 
   return (
     <div>
       <h1>Inbox for {userId}</h1>
       {messages.length === 0 && <p>No messages</p>}
       <ul>
-        {messages.map(msg => (
+        {messages.map((msg) => (
           <li key={msg.id}>
             <p><b>From:</b> {msg.senderId}</p>
             <p>{msg.content}</p>
