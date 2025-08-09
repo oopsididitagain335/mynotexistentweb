@@ -1,9 +1,8 @@
-// pages/index.tsx
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 
-// Firebase imports using relative path
+// Firebase imports
 import { db, auth } from '../firebase/config';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
@@ -18,7 +17,7 @@ export default function HomePage() {
 
   const router = useRouter();
 
-  // Validate username format
+  // Validate username format: 3-20 chars, alphanumeric, underscore, hyphen
   const isValid = /^[a-zA-Z0-9_-]{3,20}$/.test(username.trim());
 
   // Check availability in Firestore
@@ -27,7 +26,7 @@ export default function HomePage() {
       setIsChecking(true);
       const timeout = setTimeout(async () => {
         try {
-          const userDocRef = doc(db, 'usernames', username);
+          const userDocRef = doc(db, 'usernames', username.toLowerCase());
           const snap = await getDoc(userDocRef);
           setIsAvailable(!snap.exists());
         } catch (error) {
@@ -60,7 +59,8 @@ export default function HomePage() {
 
     setIsSubmitting(true);
     try {
-      const userDocRef = doc(db, 'usernames', username);
+      const cleanUsername = username.toLowerCase();
+      const userDocRef = doc(db, 'usernames', cleanUsername);
       const snap = await getDoc(userDocRef);
 
       if (snap.exists()) {
@@ -68,16 +68,16 @@ export default function HomePage() {
       }
 
       await setDoc(userDocRef, {
-        username,
+        username: cleanUsername,
         claimedAt: new Date().toISOString(),
         uid: auth.currentUser?.uid || null,
       });
 
-      // Show success and redirect
+      // Show success toast
       setShowToast('success');
-      setMessage(`✅ Successfully claimed thebiolink.lol/${username}`);
+      setMessage(`✅ Successfully claimed thebiolink.lol/${cleanUsername}`);
       setTimeout(() => {
-        router.push(`/${username}`);
+        router.push(`/${cleanUsername}`);
       }, 1500);
     } catch (error: any) {
       setShowToast('error');
@@ -89,257 +89,333 @@ export default function HomePage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-black text-white overflow-hidden font-sans">
-      {/* Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-black to-purple-950 z-0" />
-
-      {/* Cursor Glow */}
+    <div className="container">
+      {/* Glow effect */}
       <div
-        className="pointer-events-none fixed w-96 h-96 rounded-full blur-3xl opacity-10 z-0 transition duration-300"
+        className="radial-glow"
         style={{
-          left: mousePosition.x,
-          top: mousePosition.y,
-          transform: 'translate(-50%, -50%)',
-          background: 'radial-gradient(600px circle at var(--x) var(--y), rgba(147, 51, 234, 0.25), transparent 40%)',
-        }}
-        onMouseMove={(e) => {
-          const { clientX, clientY } = e;
-          (e.currentTarget.style as any).setProperty('--x', `${clientX}px`);
-          (e.currentTarget.style as any).setProperty('--y', `${clientY}px`);
+          left: `${mousePosition.x}px`,
+          top: `${mousePosition.y}px`,
         }}
       />
 
-      {/* Floating Orbs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div
-          className="absolute rounded-full blur-3xl opacity-10 animate-pulse"
-          style={{
-            width: '400px',
-            height: '400px',
-            background: 'radial-gradient(circle, #7c3aed, transparent)',
-            top: '15%',
-            right: '10%',
-            animationDuration: '10s',
-          }}
-        />
-        <div
-          className="absolute rounded-full blur-3xl opacity-10 animate-pulse"
-          style={{
-            width: '300px',
-            height: '300px',
-            background: 'radial-gradient(circle, #06b6d4, transparent)',
-            bottom: '20%',
-            left: '15%',
-            animationDuration: '12s',
-            animationDelay: '3s',
-          }}
-        />
-      </div>
+      <main className="main">
+        <h1 className="title">thebiolink.lol</h1>
+        <p className="subtitle">Claim your link. Own your identity.</p>
 
-      {/* Header */}
-      <header className="relative z-10 flex justify-between items-center px-6 py-6 max-w-6xl mx-auto">
-        <div className="flex items-center gap-1">
-          <span className="text-2xl font-black">the</span>
-          <span className="text-2xl font-black bg-gradient-to-r from-green-400 to-teal-400 bg-clip-text text-transparent">
-            biolink
-          </span>
-          <span className="text-2xl text-gray-500">.lol</span>
-        </div>
-
-        <nav className="hidden md:flex items-center gap-8 text-sm">
-          <Link href="/help">
-            <a className="text-gray-300 hover:text-white transition cursor-pointer">Help</a>
-          </Link>
-
-          <a
-            href="https://discord.gg"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-gray-300 hover:text-white transition"
-          >
-            Discord
-          </a>
-
-          <Link href="/pricing">
-            <a className="text-gray-300 hover:text-white transition cursor-pointer">Pricing</a>
-          </Link>
-
-          <Link href="/login">
-            <a className="text-green-400 hover:underline transition cursor-pointer">Log In</a>
-          </Link>
-        </nav>
-      </header>
-
-      {/* Hero */}
-      <main className="relative z-10 px-6 py-16 flex flex-col items-center text-center max-w-4xl mx-auto">
-        <h1 className="text-4xl sm:text-6xl md:text-7xl font-black bg-gradient-to-b from-white via-green-200 to-teal-200 bg-clip-text text-transparent leading-tight mb-6">
-          One link.
-          <br />
-          <span className="text-transparent bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text">
-            Infinite possibilities.
-          </span>
-        </h1>
-
-        <p className="text-gray-300 text-lg md:text-xl mb-12 max-w-2xl leading-relaxed">
-          Share your bio, files, socials, and more — all from one encrypted, secure link.
-        </p>
-
-        {/* Claim Username Form */}
-        <form onSubmit={handleSubmit} className="w-full max-w-md mb-10">
-          <div className="flex flex-col sm:flex-row gap-3 relative">
-            <div className="flex-1 flex items-center bg-gray-900/60 backdrop-blur-sm border border-gray-700 rounded-full px-4 py-3 font-mono text-sm">
-              <span className="text-green-400 truncate">thebiolink.lol/</span>
-            </div>
-            <div className="flex-2 relative">
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="yourname"
-                aria-label="Choose your username"
-                className={`w-full bg-gray-900/60 backdrop-blur-sm border px-4 py-3 rounded-full font-mono text-white placeholder-gray-500 focus:outline-none transition-all pr-10 ${
-                  !isValid && username
-                    ? 'border-red-600'
-                    : isAvailable === false
-                    ? 'border-red-500'
-                    : isAvailable === true
-                    ? 'border-green-500'
-                    : 'border-gray-700 focus:border-purple-500'
-                }`}
-              />
-              {isChecking && (
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
-                </div>
-              )}
-            </div>
-            <button
-              type="submit"
-              disabled={!isValid || isSubmitting || isAvailable === false}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-gray-800 disabled:to-gray-900 text-white font-bold py-3 px-6 rounded-full transition-all hover:scale-105 hover:shadow-lg hover:shadow-purple-500/30 disabled:cursor-not-allowed min-w-32 text-sm"
-            >
-              {isSubmitting ? '...' : 'Claim'}
-            </button>
+        <form onSubmit={handleSubmit} className="claim-form">
+          <div className="input-group">
+            <span className="prefix">thebiolink.lol/</span>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="username"
+              autoFocus
+              className={`input ${isAvailable === false ? 'invalid' : ''} ${isAvailable === true ? 'valid' : ''}`}
+              disabled={isSubmitting}
+            />
           </div>
 
-          {/* Feedback Messages */}
-          {username && !isValid && (
-            <p className="text-red-500 text-xs mt-2 ml-4 text-left">
-              Use 3–20 characters: letters, numbers, _, or -
-            </p>
+          {/* Availability status */}
+          {username.length >= 3 && !isValid && (
+            <p className="error-text">3-20 characters. Letters, numbers, _ or - only.</p>
           )}
-          {isAvailable === false && !isChecking && username && (
-            <p className="text-red-500 text-xs mt-2 ml-4 text-left">Username taken.</p>
+          {isChecking && <p className="status">Checking...</p>}
+          {isAvailable === false && !isChecking && (
+            <p className="error-text">❌ Taken or invalid</p>
           )}
           {isAvailable === true && !isChecking && (
-            <p className="text-green-500 text-xs mt-2 ml-4 text-left">✓ Available!</p>
+            <p className="success-text">✅ Available!</p>
           )}
+
+          <button
+            type="submit"
+            className="claim-button"
+            disabled={!isValid || isSubmitting || isAvailable === false}
+          >
+            {isSubmitting ? 'Claiming...' : 'Claim Link'}
+          </button>
         </form>
 
-        {/* Toast Notification */}
-        {showToast && (
-          <div
-            className={`fixed top-20 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-lg z-50 text-sm font-medium animate-fade-in_up ${
-              showToast === 'success' ? 'bg-green-600' : 'bg-red-600'
-            }`}
-          >
-            {message}
-          </div>
-        )}
+        {/* Example Profiles */}
+        <section className="examples">
+          <h2 className="examples-title">Examples</h2>
+          <div className="profile-examples">
+            {/* Example 1 */}
+            <div className="profile-card">
+              <div className="avatar">🔥</div>
+              <h3 className="example-username">yourname</h3>
+              <div className="links">
+                <div className="link">Instagram</div>
+                <div className="link">TikTok</div>
+                <div className="link">Spotify</div>
+              </div>
+            </div>
 
-        {/* Mobile Login Link */}
-        <p className="text-sm text-gray-500 mt-4 md:hidden">
-          Already have an account?{' '}
-          <Link href="/login">
-            <a className="text-green-400 hover:underline">Log in</a>
-          </Link>
-        </p>
+            {/* Example 2 */}
+            <div className="profile-card">
+              <div className="avatar">🎮</div>
+              <h3 className="example-username">gamertag</h3>
+              <div className="links">
+                <div className="link">Twitch</div>
+                <div className="link">YouTube</div>
+                <div className="link">Discord</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer className="footer">
+          <p>
+            Made with 💜 • <Link href="/privacy">Privacy</Link> •{' '}
+            <Link href="/terms">Terms</Link>
+          </p>
+        </footer>
       </main>
 
-      {/* Device Mockups */}
-      <div className="relative z-10 max-w-5xl mx-auto px-6 pb-20 flex justify-center">
-        <div className="relative w-full max-w-3xl aspect-video">
-          {/* Laptop Mockup */}
-          <div
-            className="absolute top-0 left-1/3 transform -translate-x-1/2 animate-float"
-            style={{ animationDelay: '0s' }}
-          >
-            <div className="w-72 h-48 bg-slate-900 border border-gray-700 rounded-t-xl rounded-b-sm shadow-2xl overflow-hidden">
-              <div className="h-6 bg-gray-800 flex items-center px-2 space-x-1">
-                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              </div>
-              <div className="p-4 text-xs text-gray-300 font-mono">
-                <div>🔗 thebiolink.lol/{username || 'yourname'}</div>
-                <div className="mt-2">Bio • Files • Socials</div>
-                <div className="mt-1 text-green-400">✓ Encrypted • Yours</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile Mockup */}
-          <div
-            className="absolute top-16 right-1/3 transform translate-x-1/2 animate-float"
-            style={{ animationDelay: '1.5s' }}
-          >
-            <div className="w-36 h-64 bg-black border border-gray-700 rounded-3xl shadow-2xl overflow-hidden relative">
-              <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-800 rounded-full"></div>
-              <div className="p-3 text-xs text-gray-300 font-mono h-full flex flex-col">
-                <div className="flex justify-between mb-2">
-                  <span>12:34</span>
-                  <div className="flex space-x-1">
-                    <div className="w-1 h-3 bg-gray-500"></div>
-                    <div className="w-1 h-3 bg-gray-500"></div>
-                    <div className="w-1 h-3 bg-gray-500"></div>
-                  </div>
-                </div>
-                <div className="flex-1 flex flex-col items-center justify-center space-y-2">
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-teal-400 rounded-full"></div>
-                  <div className="text-white font-bold text-sm">{username || 'yourname'}</div>
-                  <div className="text-gray-400 text-xs">+5 links</div>
-                  <div className="text-green-400 text-xs">✓ Verified</div>
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* Toast Notification */}
+      {showToast && (
+        <div className={`toast ${showToast}`}>
+          {message}
         </div>
-      </div>
+      )}
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-gray-800 text-gray-500 text-sm text-center py-8 px-6">
-        <div className="max-w-4xl mx-auto">
-          <p>&copy; {new Date().getFullYear()} thebiolink.lol — Own your identity.</p>
-          <div className="mt-2 space-x-6">
-            <Link href="/terms">
-              <a className="hover:text-white transition">Terms</a>
-            </Link>
-            <Link href="/privacy">
-              <a className="hover:text-white transition">Privacy</a>
-            </Link>
-            <Link href="/security">
-              <a className="hover:text-white transition">Security</a>
-            </Link>
-          </div>
-        </div>
-      </footer>
-
-      {/* Animations */}
       <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-12px); }
+        .container {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #0f0f11;
+          color: white;
+          position: relative;
+          overflow: hidden;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
+
+        .radial-glow {
+          position: fixed;
+          width: 600px;
+          height: 600px;
+          background: radial-gradient(circle, rgba(106, 17, 203, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
+          pointer-events: none;
+          transform: translate(-50%, -50%);
+          z-index: 0;
+          opacity: 0.8;
         }
-        .animate-fade-in_up {
-          animation: fade-in-up 0.4s ease-out;
+
+        .main {
+          position: relative;
+          z-index: 1;
+          text-align: center;
+          padding: 2rem;
+          max-width: 600px;
+          width: 90%;
         }
-        @keyframes fade-in-up {
+
+        .title {
+          font-size: 2.8rem;
+          font-weight: 800;
+          margin: 0;
+          background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          letter-spacing: -0.03em;
+        }
+
+        .subtitle {
+          color: #aaa;
+          margin: 0.5rem 0 2rem;
+          font-size: 1.1rem;
+        }
+
+        .claim-form {
+          margin-bottom: 2.5rem;
+        }
+
+        .input-group {
+          display: flex;
+          border: 1px solid #333;
+          border-radius: 12px;
+          overflow: hidden;
+          background: #1a1a1f;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .prefix {
+          padding: 0.85rem 1rem;
+          background: #25252d;
+          color: #888;
+          font-size: 1.1rem;
+          border-right: 1px solid #333;
+        }
+
+        .input {
+          flex: 1;
+          padding: 0.85rem 1rem;
+          border: none;
+          outline: none;
+          background: transparent;
+          color: white;
+          font-size: 1.1rem;
+          transition: all 0.2s;
+        }
+
+        .input::placeholder {
+          color: #666;
+        }
+
+        .input.invalid {
+          color: #ef4444;
+        }
+
+        .input.valid {
+          color: #10b981;
+        }
+
+        .status, .error-text, .success-text {
+          margin: 0.5rem 0 0;
+          font-size: 0.9rem;
+          text-align: left;
+          height: 1.5rem;
+        }
+
+        .error-text {
+          color: #ef4444;
+        }
+
+        .success-text {
+          color: #10b981;
+        }
+
+        .status {
+          color: #666;
+        }
+
+        .claim-button {
+          margin-top: 1rem;
+          background: #6a11cb;
+          color: white;
+          border: none;
+          padding: 0.85rem 2rem;
+          font-size: 1.1rem;
+          border-radius: 12px;
+          cursor: pointer;
+          font-weight: 600;
+          transition: all 0.2s;
+          width: 100%;
+        }
+
+        .claim-button:hover:not([disabled]) {
+          background: #8418f5;
+          transform: translateY(-1px);
+        }
+
+        .claim-button:disabled {
+          background: #444;
+          cursor: not-allowed;
+          opacity: 0.6;
+        }
+
+        .examples {
+          margin-top: 3rem;
+        }
+
+        .examples-title {
+          font-size: 1.3rem;
+          color: #ccc;
+          margin-bottom: 1.5rem;
+        }
+
+        .profile-examples {
+          display: flex;
+          gap: 1.5rem;
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+
+        .profile-card {
+          background: #1a1a1f;
+          border-radius: 16px;
+          padding: 1.5rem;
+          width: 180px;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .avatar {
+          font-size: 2.5rem;
+          margin: 0 auto 0.8rem;
+          display: block;
+        }
+
+        .example-username {
+          margin: 0 0 1rem;
+          font-size: 1.3rem;
+          color: white;
+        }
+
+        .links {
+          display: flex;
+          flex-direction: column;
+          gap: 0.6rem;
+        }
+
+        .link {
+          padding: 0.5rem 0.75rem;
+          background: #2a2a33;
+          border-radius: 8px;
+          font-size: 0.9rem;
+          color: #aaa;
+          text-align: center;
+        }
+
+        .link:hover {
+          background: #3a3a44;
+        }
+
+        .footer {
+          margin-top: 3rem;
+          font-size: 0.9rem;
+          color: #666;
+        }
+
+        .footer a {
+          color: #6a11cb;
+          text-decoration: none;
+        }
+
+        .footer a:hover {
+          text-decoration: underline;
+        }
+
+        .toast {
+          position: fixed;
+          bottom: 2rem;
+          left: 50%;
+          transform: translateX(-50%);
+          padding: 1rem 2rem;
+          border-radius: 12px;
+          font-weight: 500;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+          animation: fadeInUp 0.3s ease;
+          z-index: 9999;
+        }
+
+        .toast.success {
+          background: #10b981;
+          color: white;
+        }
+
+        .toast.error {
+          background: #ef4444;
+          color: white;
+        }
+
+        @keyframes fadeInUp {
           from {
             opacity: 0;
-            transform: translate(-50%, -15px);
+            transform: translate(-50%, 10px);
           }
           to {
             opacity: 1;
