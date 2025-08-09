@@ -18,11 +18,8 @@ export interface DiscoveryUser extends User {
   id: string;
 }
 
-/**
- * Get trending users (public, high engagement)
- */
 export const getTrendingUsers = async (
-  limitCount: number = 50,
+  limitCount = 50,
   lastDoc?: DocumentSnapshot
 ): Promise<DiscoveryUser[]> => {
   let q = query(
@@ -40,28 +37,18 @@ export const getTrendingUsers = async (
   return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as DiscoveryUser));
 };
 
-/**
- * Search users by username, name, or category (fuzzy via client)
- */
 export const searchUsers = async (term: string): Promise<DiscoveryUser[]> => {
   const q = query(collection(db, COLLECTION), where('privacy', '==', 'public'));
   const snap = await getDocs(q);
-  const users: DiscoveryUser[] = [];
 
-  for (const doc of snap.docs) {
-    const data = doc.data() as User;
-    const searchStr = `${data.username} ${data.name} ${data.category}`.toLowerCase();
-    if (searchStr.includes(term.toLowerCase())) {
-      users.push({ id: doc.id, ...data });
-    }
-  }
-
-  return users;
+  return snap.docs
+    .map((doc) => ({ id: doc.id, ...(doc.data() as User) }))
+    .filter((user) => {
+      const searchStr = `${user.username} ${user.name} ${user.category}`.toLowerCase();
+      return searchStr.includes(term.toLowerCase());
+    });
 };
 
-/**
- * Get users by badge
- */
 export const getUsersByBadge = async (badgeType: string): Promise<DiscoveryUser[]> => {
   const q = query(
     collection(db, COLLECTION),
