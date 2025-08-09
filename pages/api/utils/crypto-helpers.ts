@@ -1,49 +1,38 @@
-{
-  "name": "thebiolink.lol",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
-  },
-  "engines": {
-    "node": ">=22.0.0 <23.0.0"
-  },
-  "dependencies": {
-    "next": "14.1.0",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "firebase": "10.7.0",
-    "tailwindcss": "^3.3.0",
-    "postcss": "^8.4.0",
-    "autoprefixer": "^10.4.0",
-    "nodemailer": "^6.9.0",
-    "uuid": "^9.0.0",
-    "date-fns": "^2.30.0",
-    "recharts": "^2.7.0",
-    "libsodium-wrappers": "^0.7.10",
-    "discord.js": "^14.15.3",
-    "node-fetch": "^3.3.2"
-  },
-  "devDependencies": {
-    "@types/uuid": "^10.0.0",
-    "@types/nodemailer": "^6.4.14",
-    "@types/node": "^22",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "typescript": "^5.0.0"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+import * as sodium from 'libsodium-wrappers';
+
+let sodiumReady = false;
+let OPSLIMIT: number;
+let MEMLIMIT: number;
+let ALG: number;
+
+export const initSodium = async () => {
+  if (!sodiumReady) {
+    await sodium.ready;
+    OPSLIMIT = (sodium as any).crypto_pwhash_OPSLIMIT_INTERACTIVE;
+    MEMLIMIT = (sodium as any).crypto_pwhash_MEMLIMIT_INTERACTIVE;
+    ALG = (sodium as any).crypto_pwhash_ALG_DEFAULT;
+    sodiumReady = true;
   }
-}
+};
+
+await initSodium();
+
+export const hashPassword = async (password: string): Promise<string> => {
+  const salt = sodium.randombytes_buf(16);
+  const key = sodium.crypto_pwhash(32, password, salt, OPSLIMIT, MEMLIMIT, ALG);
+  return sodium.to_base64(key);
+};
+
+export const verifyPassword = (
+  storedKey: string,
+  password: string,
+  salt: Uint8Array
+): boolean => {
+  try {
+    const key = sodium.crypto_pwhash(32, password, salt, OPSLIMIT, MEMLIMIT, ALG);
+    const encoded = sodium.to_base64(key);
+    return encoded === storedKey;
+  } catch {
+    return false;
+  }
+};
