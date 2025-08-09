@@ -61,17 +61,9 @@ const Home: React.FC = () => {
           </Link>
         </div>
 
-        {/* Footer Section with Mockup */}
-        <div className="relative w-full h-96 overflow-hidden rounded-lg shadow-lg">
-          <img
-            src="/mockup.png" // Replace with your mockup image
-            alt="Profile Preview"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black opacity-50"></div>
-          <div className="absolute inset-0 flex items-center justify-center text-white">
-            <p className="text-xl font-bold">Preview your profile</p>
-          </div>
+        {/* Footer Section */}
+        <div className="text-sm text-gray-400">
+          Built for creators, hackers, and digital citizens.
         </div>
       </div>
     </Layout>
