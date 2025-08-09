@@ -30,10 +30,16 @@ const Index: React.FC = () => {
           </div>
 
           <div className="space-x-8 text-gray-300 hidden md:flex">
-            <a href="#features" className="hover:text-purple-300 transition duration-200">Features</a>
-            <a href="#pricing" className="hover:text-purple-300 transition duration-200">Pricing</a>
-            <a href="#support" className="hover:text-purple-300 transition duration-200">Support</a>
-            <Link href="/login">
+            <Link href="#features" passHref>
+              <a className="hover:text-purple-300 transition duration-200">Features</a>
+            </Link>
+            <Link href="#pricing" passHref>
+              <a className="hover:text-purple-300 transition duration-200">Pricing</a>
+            </Link>
+            <Link href="#support" passHref>
+              <a className="hover:text-purple-300 transition duration-200">Support</a>
+            </Link>
+            <Link href="/login" passHref>
               <a className="hover:text-purple-300 transition duration-200">Login</a>
             </Link>
           </div>
