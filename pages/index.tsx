@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 
-// Firebase imports
+// Firebase
 import { db } from '../firebase/config';
 import { doc, getDoc } from 'firebase/firestore';
 
@@ -17,13 +17,12 @@ export default function HomePage() {
 
   const router = useRouter();
 
+  // Validate format
+  const isValidFormat = /^[a-zA-Z0-9_-]{3,20}$/.test(username.trim());
   const trimmed = username.trim();
   const cleanUsername = trimmed.toLowerCase();
 
-  // Validate format: 3–20 chars, letters, numbers, _, -
-  const isValidFormat = /^[a-zA-Z0-9_-]{3,20}$/.test(trimmed);
-
-  // Reset state when input changes
+  // Reset availability when input changes
   useEffect(() => {
     if (trimmed === '') {
       setIsAvailable(null);
@@ -40,7 +39,6 @@ export default function HomePage() {
     }
 
     setIsChecking(true);
-
     const timer = setTimeout(async () => {
       try {
         const userDocRef = doc(db, 'usernames', cleanUsername);
@@ -55,10 +53,10 @@ export default function HomePage() {
           setIsAvailable(false);
         }
       } catch (error: any) {
-        console.error('Firestore check failed:', error);
-        // Handle network errors gracefully
+        console.error('Firestore error:', error);
+        // Don't assume "taken" on error — show generic error
         setIsAvailable(null);
-        setMessage(`⚠️ Network error: ${error.message}`);
+        setMessage(`⚠️ Connection issue: ${error.message}`);
         setShowToast('error');
         setTimeout(() => setShowToast(null), 3000);
       } finally {
@@ -69,19 +67,20 @@ export default function HomePage() {
     return () => clearTimeout(timer);
   }, [cleanUsername, isValidFormat]);
 
-  // Mouse move handler with typed event
+  // Mouse glow effect
   useEffect(() => {
-    const handleMove = (e: MouseEvent) => {
+    const handleMove = (e) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
     };
-
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isValidFormat || isAvailable !== true || isSubmitting) return;
+    if (!isValidFormat || !trimmed) return;
+    if (isAvailable !== true) return;
+    if (isSubmitting) return;
 
     setIsSubmitting(true);
     try {
@@ -92,15 +91,19 @@ export default function HomePage() {
         throw new Error('Username already taken');
       }
 
-      // Simulate success for now
+      // In a full app, you'd use `setDoc` here
+      // await setDoc(userDocRef, { ...data })
+
+      console.log('🎉 Claimed:', cleanUsername);
       setShowToast('success');
       setMessage(`✅ Success! thebiolink.lol/${cleanUsername}`);
       setTimeout(() => {
         router.push(`/${cleanUsername}`);
       }, 1000);
     } catch (error: any) {
+      console.error('Claim failed:', error);
       setShowToast('error');
-      setMessage(`❌ ${error.message || 'Claim failed'}`);
+      setMessage(`❌ ${error.message || 'Failed to claim'}`);
     } finally {
       setIsSubmitting(false);
       setTimeout(() => setShowToast(null), 3000);
@@ -109,7 +112,6 @@ export default function HomePage() {
 
   return (
     <div className="container">
-      {/* Glow effect */}
       <div
         className="radial-glow"
         style={{
@@ -138,11 +140,11 @@ export default function HomePage() {
 
           {/* Status Messages */}
           {trimmed && !isValidFormat && (
-            <p className="error-text">3–20 characters: letters, numbers, _ or - only.</p>
+            <p className="error-text">Use 3–20 characters: letters, numbers, _ or -</p>
           )}
 
           {isChecking && (
-            <p className="status">Checking availability...</p>
+            <p className="status">Searching...</p>
           )}
 
           {isAvailable === true && !isChecking && (
@@ -162,12 +164,11 @@ export default function HomePage() {
           </button>
         </form>
 
-        {/* Example Mobile Devices */}
+        {/* Example Devices */}
         <section className="examples">
           <h2 className="examples-title">How It Looks</h2>
           <div className="profile-examples">
-            {/* Artist */}
-            <div className="mobile-device">
+            <div className="mobile-device artist">
               <div className="device-frame">
                 <div className="camera"></div>
                 <div className="screen">
@@ -183,8 +184,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Gamer */}
-            <div className="mobile-device">
+            <div className="mobile-device gamer">
               <div className="device-frame">
                 <div className="camera"></div>
                 <div className="screen">
@@ -200,8 +200,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Music */}
-            <div className="mobile-device">
+            <div className="mobile-device music">
               <div className="device-frame">
                 <div className="camera"></div>
                 <div className="screen">
@@ -227,7 +226,6 @@ export default function HomePage() {
         </footer>
       </main>
 
-      {/* Toast Notification */}
       {showToast && (
         <div className={`toast ${showToast}`}>
           {message}
@@ -243,8 +241,8 @@ export default function HomePage() {
           background: #0f0f11;
           color: white;
           position: relative;
+          font-family: 'Inter', sans-serif;
           overflow: hidden;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
         .radial-glow {
