@@ -5,19 +5,25 @@ import Link from 'next/link';
 const Home: React.FC = () => {
   return (
     <Layout title="thebiolink.lol — Your Identity. Your Consequences." noNav>
-      <div className="page-home text-center">
-        <h1 className="hero">
-          <span className="text-heading">Your Link. Your Server. Your Identity.</span>
+      <div className="min-h-screen flex flex-col justify-center items-center px-4 text-center bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+        <h1 className="font-extrabold text-4xl sm:text-5xl leading-tight max-w-4xl mx-auto">
+          <span className="text-purple-700 dark:text-purple-400">Your Link. Your Server. Your Identity.</span>
           <br />
-          <span className="text-subhead">One profile. Zero compromises.</span>
+          <span className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 font-medium">
+            One profile. Zero compromises.
+          </span>
         </h1>
 
         <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
           <Link href="/signup" passHref>
-            <a className="btn btn-primary px-8 py-3 text-lg">Get Started</a>
+            <a className="inline-block px-8 py-3 text-lg font-semibold rounded-lg bg-purple-700 text-white hover:bg-purple-800 focus:outline-none focus:ring-4 focus:ring-purple-300 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900 transition">
+              Get Started
+            </a>
           </Link>
           <Link href="/login" passHref>
-            <a className="btn btn-outline px-8 py-3">Log In</a>
+            <a className="inline-block px-8 py-3 rounded-lg border border-gray-500 text-gray-700 hover:bg-gray-100 dark:border-gray-400 dark:text-gray-300 dark:hover:bg-gray-700 transition">
+              Log In
+            </a>
           </Link>
         </div>
 
