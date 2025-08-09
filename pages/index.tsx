@@ -1,10 +1,11 @@
-'use client';
-
+// pages/index.tsx
 import { useEffect, useState } from 'react';
-import { db, auth } from '@/firebase/config';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
 import Link from 'next/link';
+
+// 🔥 Import Firebase using relative path to avoid @/ alias issues
+import { db, auth } from '../firebase/config';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export default function HomePage() {
   const [username, setUsername] = useState('');
@@ -17,24 +18,26 @@ export default function HomePage() {
 
   const router = useRouter();
 
-  // Real-time validation
+  // Validate username format
   const isValid = /^[a-zA-Z0-9_-]{3,20}$/.test(username.trim());
 
-  // Check availability
+  // Check availability in Firestore
   useEffect(() => {
     if (username.length >= 3 && isValid) {
       setIsChecking(true);
       const timeout = setTimeout(async () => {
         try {
-          const docRef = doc(db, 'usernames', username);
-          const docSnap = await getDoc(docRef);
-          setIsAvailable(!docSnap.exists());
-        } catch {
+          const userDocRef = doc(db, 'usernames', username);
+          const snap = await getDoc(userDocRef);
+          setIsAvailable(!snap.exists());
+        } catch (error) {
+          console.error('Check failed:', error);
           setIsAvailable(false);
         } finally {
           setIsChecking(false);
         }
       }, 500);
+
       return () => clearTimeout(timeout);
     } else {
       setIsAvailable(null);
@@ -42,39 +45,43 @@ export default function HomePage() {
     }
   }, [username, isValid]);
 
-  // Cursor tracking
+  // Track mouse for glow effect
   useEffect(() => {
-    const handleMove = (e: MouseEvent) => setMousePosition({ x: e.clientX, y: e.clientY });
+    const handleMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValid || !isAvailable || isSubmitting) return;
+    if (!isValid || isSubmitting || isAvailable === false) return;
 
     setIsSubmitting(true);
     try {
-      const userDoc = doc(db, 'usernames', username);
-      const snap = await getDoc(userDoc);
+      const userDocRef = doc(db, 'usernames', username);
+      const snap = await getDoc(userDocRef);
+
       if (snap.exists()) {
         throw new Error('Username already taken');
       }
 
-      await setDoc(userDoc, {
+      await setDoc(userDocRef, {
+        username,
         claimedAt: new Date().toISOString(),
         uid: auth.currentUser?.uid || null,
-        username,
       });
 
+      // Success
       setShowToast('success');
-      setMessage(`Successfully claimed thebiolink.lol/${username}`);
+      setMessage(`✅ Successfully claimed thebiolink.lol/${username}`);
       setTimeout(() => {
         router.push(`/${username}`);
       }, 1500);
     } catch (error: any) {
       setShowToast('error');
-      setMessage(error.message || 'Failed to claim username');
+      setMessage(`❌ ${error.message || 'Failed to claim username'}`);
     } finally {
       setIsSubmitting(false);
       setTimeout(() => setShowToast(null), 3000);
@@ -86,19 +93,19 @@ export default function HomePage() {
       {/* Gradient Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-black to-purple-950 z-0" />
 
-      {/* Animated Cursor Glow */}
+      {/* Cursor Glow */}
       <div
-        className="pointer-events-none fixed w-96 h-96 rounded-full blur-3xl opacity-15 z-0 transition duration-500"
+        className="pointer-events-none fixed w-96 h-96 rounded-full blur-3xl opacity-10 z-0 transition duration-300"
         style={{
           left: mousePosition.x,
           top: mousePosition.y,
           transform: 'translate(-50%, -50%)',
-          background: 'radial-gradient(600px circle at var(--x) var(--y), rgba(147, 51, 234, 0.3), transparent 40%)',
+          background: 'radial-gradient(600px circle at var(--x) var(--y), rgba(147, 51, 234, 0.25), transparent 40%)',
         }}
         onMouseMove={(e) => {
           const { clientX, clientY } = e;
-          e.currentTarget.style.setProperty('--x', `${clientX}px`);
-          e.currentTarget.style.setProperty('--y', `${clientY}px`);
+          (e.currentTarget.style as any).setProperty('--x', `${clientX}px`);
+          (e.currentTarget.style as any).setProperty('--y', `${clientY}px`);
         }}
       />
 
@@ -140,17 +147,17 @@ export default function HomePage() {
         </div>
 
         <nav className="hidden md:flex items-center gap-8 text-sm">
-          <Link href="/help" className="text-gray-300 hover:text-white transition">
-            Help
+          <Link href="/help">
+            <a className="text-gray-300 hover:text-white transition">Help</a>
           </Link>
-          <Link href="https://discord.gg" target="_blank" className="text-gray-300 hover:text-white transition">
+          <a href="https://discord.gg" target="_blank" className="text-gray-300 hover:text-white transition">
             Discord
           </Link>
-          <Link href="/pricing" className="text-gray-300 hover:text-white transition">
-            Pricing
+          <Link href="/pricing">
+            <a className="text-gray-300 hover:text-white transition">Pricing</a>
           </Link>
-          <Link href="/login" className="text-green-400 hover:underline transition">
-            Log In
+          <Link href="/login">
+            <a className="text-green-400 hover:underline transition">Log In</a>
           </Link>
         </nav>
       </header>
@@ -169,7 +176,7 @@ export default function HomePage() {
           Share your bio, files, socials, and more — all from one encrypted, secure link.
         </p>
 
-        {/* Claim Form */}
+        {/* Claim Username Form */}
         <form onSubmit={handleSubmit} className="w-full max-w-md mb-10">
           <div className="flex flex-col sm:flex-row gap-3 relative">
             <div className="flex-1 flex items-center bg-gray-900/60 backdrop-blur-sm border border-gray-700 rounded-full px-4 py-3 font-mono text-sm">
@@ -207,28 +214,23 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* Validation Feedback */}
+          {/* Feedback */}
           {username && !isValid && (
-            <p className="text-red-500 text-xs mt-2 text-left ml-4">
-              3-20 characters, letters, numbers, _, or -
+            <p className="text-red-500 text-xs mt-2 ml-4 text-left">
+              Use 3–20 characters: letters, numbers, _, or -
             </p>
           )}
           {isAvailable === false && !isChecking && username && (
-            <p className="text-red-500 text-xs mt-2 text-left ml-4">Username taken or invalid.</p>
+            <p className="text-red-500 text-xs mt-2 ml-4 text-left">Username taken.</p>
           )}
           {isAvailable === true && !isChecking && (
-            <p className="text-green-500 text-xs mt-2 text-left ml-4">✓ Available!</p>
+            <p className="text-green-500 text-xs mt-2 ml-4 text-left">✓ Available!</p>
           )}
         </form>
 
-        {/* Toast */}
+        {/* Toast Notification */}
         {showToast && (
-          <div
-            className={`fixed top-20 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-lg z-50 text-sm font-medium animate-fade-in-up ${
-              showToast === 'success' ? 'bg-green-600' : 'bg-red-600'
-            }`}
-          >
-            {showToast === 'success' ? '✅ ' : '❌ '}
+          <div className={`fixed top-20 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-lg z-50 text-sm font-medium animate-fade-in-up ${showToast === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
             {message}
           </div>
         )}
@@ -236,8 +238,8 @@ export default function HomePage() {
         {/* Mobile Login Link */}
         <p className="text-sm text-gray-500 mt-4 md:hidden">
           Already have an account?{' '}
-          <Link href="/login" className="text-green-400 hover:underline">
-            Log in
+          <Link href="/login">
+            <a className="text-green-400 hover:underline">Log in</a>
           </Link>
         </p>
       </main>
@@ -245,10 +247,8 @@ export default function HomePage() {
       {/* Device Mockups */}
       <div className="relative z-10 max-w-5xl mx-auto px-6 pb-20 flex justify-center">
         <div className="relative w-full max-w-3xl aspect-video">
-          <div
-            className="absolute top-0 left-1/3 transform -translate-x-1/2 animate-float"
-            style={{ animationDelay: '0s' }}
-          >
+          {/* Laptop */}
+          <div className="absolute top-0 left-1/3 transform -translate-x-1/2 animate-float" style={{ animationDelay: '0s' }}>
             <div className="w-72 h-48 bg-slate-900 border border-gray-700 rounded-t-xl rounded-b-sm shadow-2xl overflow-hidden">
               <div className="h-6 bg-gray-800 flex items-center px-2 space-x-1">
                 <div className="w-3 h-3 bg-red-500 rounded-full"></div>
@@ -258,15 +258,13 @@ export default function HomePage() {
               <div className="p-4 text-xs text-gray-300 font-mono">
                 <div>🔗 thebiolink.lol/{username || 'yourname'}</div>
                 <div className="mt-2">Bio • Files • Socials</div>
-                <div className="mt-1 text-green-400">✓ Encrypted • Yours Forever</div>
+                <div className="mt-1 text-green-400">✓ Encrypted • Yours</div>
               </div>
             </div>
           </div>
 
-          <div
-            className="absolute top-16 right-1/3 transform translate-x-1/2 animate-float"
-            style={{ animationDelay: '1.5s' }}
-          >
+          {/* Mobile */}
+          <div className="absolute top-16 right-1/3 transform translate-x-1/2 animate-float" style={{ animationDelay: '1.5s' }}>
             <div className="w-36 h-64 bg-black border border-gray-700 rounded-3xl shadow-2xl overflow-hidden relative">
               <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-800 rounded-full"></div>
               <div className="p-3 text-xs text-gray-300 font-mono h-full flex flex-col">
@@ -295,14 +293,14 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto">
           <p>&copy; {new Date().getFullYear()} thebiolink.lol — Own your identity.</p>
           <div className="mt-2 space-x-6">
-            <Link href="/terms" className="hover:text-white transition">
-              Terms
+            <Link href="/terms">
+              <a className="hover:text-white transition">Terms</a>
             </Link>
-            <Link href="/privacy" className="hover:text-white transition">
-              Privacy
+            <Link href="/privacy">
+              <a className="hover:text-white transition">Privacy</a>
             </Link>
-            <Link href="/security" className="hover:text-white transition">
-              Security
+            <Link href="/security">
+              <a className="hover:text-white transition">Security</a>
             </Link>
           </div>
         </div>
