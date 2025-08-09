@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 
-// Firebase
+// Firebase imports
 import { db } from '../firebase/config';
 import { doc, getDoc } from 'firebase/firestore';
 
@@ -44,15 +44,22 @@ export default function HomePage() {
     const timer = setTimeout(async () => {
       try {
         const userDocRef = doc(db, 'usernames', cleanUsername);
+        console.log('Checking Firestore for:', cleanUsername);
         const snap = await getDoc(userDocRef);
 
-        setIsAvailable(!snap.exists());
+        if (!snap.exists()) {
+          console.log('✅ Username available:', cleanUsername);
+          setIsAvailable(true);
+        } else {
+          console.log('❌ Username taken:', cleanUsername);
+          setIsAvailable(false);
+        }
       } catch (error: any) {
         console.error('Firestore check failed:', error);
-        // Don't mark as taken on error — just show warning
+        // Handle network errors gracefully
         setIsAvailable(null);
-        setShowToast('error');
         setMessage(`⚠️ Network error: ${error.message}`);
+        setShowToast('error');
         setTimeout(() => setShowToast(null), 3000);
       } finally {
         setIsChecking(false);
@@ -85,13 +92,7 @@ export default function HomePage() {
         throw new Error('Username already taken');
       }
 
-      // 🚨 In production, save with setDoc here
-      // await setDoc(userDocRef, {
-      //   username: cleanUsername,
-      //   claimedAt: new Date().toISOString(),
-      // });
-
-      // For demo: just simulate success
+      // Simulate success for now
       setShowToast('success');
       setMessage(`✅ Success! thebiolink.lol/${cleanUsername}`);
       setTimeout(() => {
