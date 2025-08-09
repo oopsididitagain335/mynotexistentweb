@@ -1,11 +1,28 @@
 // lib/discord.ts
-// This file is for shared utilities used by the Discord bot
-// The bot itself runs in Node.js worker (bot/index.js)
+// Shared utilities for the Discord bot — Node.js only
+// The bot itself runs in bot/index.ts or a separate worker
 
-import { Client, GatewayIntentBits, REST, Routes } from 'discord.js';
+// Prevent Discord.js from loading in the browser
+let Client: any;
+let GatewayIntentBits: any;
+let REST: any;
+let Routes: any;
 
-// Initialize Discord bot client (used in bot/index.js)
+if (typeof window === 'undefined') {
+  // Dynamically require to avoid bundling into the browser build
+  const discord = require('discord.js');
+  Client = discord.Client;
+  GatewayIntentBits = discord.GatewayIntentBits;
+  REST = discord.REST;
+  Routes = discord.Routes;
+}
+
+// Create Discord bot client (Node only)
 export const createDiscordClient = () => {
+  if (typeof window !== 'undefined') {
+    throw new Error('Discord client can only be created in a Node.js environment.');
+  }
+
   return new Client({
     intents: [
       GatewayIntentBits.Guilds,
@@ -15,8 +32,12 @@ export const createDiscordClient = () => {
   });
 };
 
-// Register slash commands
+// Register slash commands (Node only)
 export const registerDiscordCommands = async () => {
+  if (typeof window !== 'undefined') {
+    throw new Error('Slash commands can only be registered in a Node.js environment.');
+  }
+
   const commands = [
     {
       name: 'profile',
@@ -88,7 +109,10 @@ export const registerDiscordCommands = async () => {
 
   try {
     await rest.put(
-      Routes.applicationGuildCommands(process.env.DISCORD_CLIENT_ID!, process.env.DISCORD_SERVER_ID!),
+      Routes.applicationGuildCommands(
+        process.env.DISCORD_CLIENT_ID!,
+        process.env.DISCORD_SERVER_ID!
+      ),
       { body: commands }
     );
     console.log('✅ Discord slash commands registered');
