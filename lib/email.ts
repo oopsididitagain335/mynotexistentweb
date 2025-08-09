@@ -1,6 +1,10 @@
 // lib/email.ts
 import nodemailer from 'nodemailer';
 
+if (!process.env.EMAIL || !process.env.APP_PASSWORD) {
+  console.warn('⚠ Email sending is disabled: Missing EMAIL or APP_PASSWORD env variables.');
+}
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -16,10 +20,7 @@ interface SendEmailOptions {
 }
 
 export const sendEmail = async ({ to, subject, html }: SendEmailOptions): Promise<void> => {
-  if (!process.env.EMAIL || !process.env.APP_PASSWORD) {
-    console.error('❌ Email disabled: Missing EMAIL or APP_PASSWORD');
-    return;
-  }
+  if (!process.env.EMAIL || !process.env.APP_PASSWORD) return;
 
   try {
     await transporter.sendMail({
