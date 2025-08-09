@@ -4,13 +4,12 @@ import { useRouter } from 'next/router';
 import ProtectedInput from '@components/ProtectedInput';
 import Layout from '@components/Layout';
 
-// Define the step types for the signup process
 type SignupStep = 'username' | 'email' | 'password' | 'confirmPassword';
 
 const Signup: React.FC = () => {
   const router = useRouter();
   const { username: urlUsername } = router.query;
-  
+
   // State for form data
   const [currentStep, setCurrentStep] = useState<SignupStep>('username');
   const [formData, setFormData] = useState({
@@ -19,7 +18,7 @@ const Signup: React.FC = () => {
     password: '',
     confirmPassword: ''
   });
-  
+
   // State for validation and loading
   const [errors, setErrors] = useState({
     username: '',
@@ -75,7 +74,7 @@ const Signup: React.FC = () => {
   const handleInputChange = (field: keyof typeof formData) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[field as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
@@ -86,31 +85,31 @@ const Signup: React.FC = () => {
   const handleNext = () => {
     let isValid = true;
     let newErrors = { ...errors };
-    
+
     switch (currentStep) {
       case 'username':
         newErrors.username = validateUsername(formData.username);
         if (newErrors.username) isValid = false;
         break;
-        
+
       case 'email':
         newErrors.email = validateEmail(formData.email);
         if (newErrors.email) isValid = false;
         break;
-        
+
       case 'password':
         newErrors.password = validatePassword(formData.password);
         if (newErrors.password) isValid = false;
         break;
-        
+
       case 'confirmPassword':
         newErrors.confirmPassword = validateConfirmPassword(formData.password, formData.confirmPassword);
         if (newErrors.confirmPassword) isValid = false;
         break;
     }
-    
+
     setErrors(newErrors);
-    
+
     if (isValid) {
       if (currentStep === 'confirmPassword') {
         handleSignup();
@@ -128,19 +127,19 @@ const Signup: React.FC = () => {
   const handleSignup = async () => {
     setIsLoading(true);
     setErrors(prev => ({ ...prev, general: '' }));
-    
+
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       console.log('Signup ', formData);
-      
+
       // Redirect to login or dashboard on success
       router.push('/login?message=account_created');
     } catch (error) {
-      setErrors(prev => ({ 
-        ...prev, 
-        general: 'An error occurred during signup. Please try again.' 
+      setErrors(prev => ({
+        ...prev,
+        general: 'An error occurred during signup. Please try again.'
       }));
     } finally {
       setIsLoading(false);
@@ -153,13 +152,6 @@ const Signup: React.FC = () => {
     const currentIndex = steps.indexOf(currentStep);
     if (currentIndex > 0) {
       setCurrentStep(steps[currentIndex - 1]);
-    }
-  };
-
-  // Handle key press (Enter)
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleNext();
     }
   };
 
@@ -195,7 +187,7 @@ const Signup: React.FC = () => {
               </span>
             </div>
             <div className="w-full bg-gray-700 rounded-full h-2">
-              <div 
+              <div
                 className="bg-gradient-to-r from-green-400 to-green-500 h-2 rounded-full transition-all duration-500"
                 style={{ width: `${getProgress()}%` }}
               ></div>
@@ -240,7 +232,6 @@ const Signup: React.FC = () => {
                     value={formData.username}
                     onChange={handleInputChange('username')}
                     placeholder="yourname"
-                    onKeyPress={handleKeyPress}
                   />
                   {errors.username && (
                     <p className="text-red-400 text-sm mt-2">{errors.username}</p>
@@ -259,7 +250,6 @@ const Signup: React.FC = () => {
                     value={formData.email}
                     onChange={handleInputChange('email')}
                     placeholder="you@example.com"
-                    onKeyPress={handleKeyPress}
                   />
                   {errors.email && (
                     <p className="text-red-400 text-sm mt-2">{errors.email}</p>
@@ -278,7 +268,6 @@ const Signup: React.FC = () => {
                     value={formData.password}
                     onChange={handleInputChange('password')}
                     placeholder="••••••••"
-                    onKeyPress={handleKeyPress}
                   />
                   {errors.password && (
                     <p className="text-red-400 text-sm mt-2">{errors.password}</p>
@@ -305,7 +294,6 @@ const Signup: React.FC = () => {
                     value={formData.confirmPassword}
                     onChange={handleInputChange('confirmPassword')}
                     placeholder="••••••••"
-                    onKeyPress={handleKeyPress}
                   />
                   {errors.confirmPassword && (
                     <p className="text-red-400 text-sm mt-2">{errors.confirmPassword}</p>
