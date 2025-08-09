@@ -1,7 +1,7 @@
 import React from 'react';
 import Layout from '@components/Layout';
 import SearchBar from '@components/SearchBar';
-import { useDiscovery } from '@contexts/DiscoveryContext'; // or correct relative path
+import { useDiscovery } from '../contexts/DiscoveryContext';
 import { useRouter } from 'next/router';
 
 const Search: React.FC = () => {
@@ -13,7 +13,6 @@ const Search: React.FC = () => {
       <div className="page-search">
         <h2 className="text-2xl font-bold mb-4">Search Users</h2>
         <SearchBar onSearch={search} />
-        {/* Display search results here */}
       </div>
     </Layout>
   );
