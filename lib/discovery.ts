@@ -1,60 +1,71 @@
-// lib/discovery.ts
-import { db } from './firebase';
 import {
   collection,
   getDocs,
+  limit,
+  orderBy,
   query,
   where,
-  orderBy,
-  limit,
   startAfter,
   DocumentSnapshot,
 } from 'firebase/firestore';
-import type { User } from '../../pages/api/user/types';
+import { db } from './firebase';
+
+// ✅ Integrated User type directly here
+export interface User {
+  username: string;
+  name: string;
+  category?: string;
+  privacy: 'public' | 'private' | 'banned';
+  weeklyClicks?: number;
+  badges?: string[];
+  email?: string;
+  uid?: string;
+  discord?: string | null;
+  linked?: boolean;
+  previousPrivacy?: string;
+  banned?: boolean;
+  bannedAt?: Date | null;
+  bannedBy?: string | null;
+}
 
 const COLLECTION = 'users';
 
-export interface DiscoveryUser extends User {
-  id: string;
-}
+/**
+ * Fetch public profiles with optional category filter
+ */
+export const getPublicProfiles = async (
+  category?: string,
+  lastDoc?: DocumentSnapshot<User>
+): Promise<{ users: User[]; lastVisible: DocumentSnapshot<User> | null }> => {
+  try {
+    let q = query(
+      collection(db, COLLECTION),
+      where('privacy', '==', 'public'),
+      orderBy('weeklyClicks', 'desc'),
+      limit(20)
+    );
 
-export const getTrendingUsers = async (
-  limitCount = 50,
-  lastDoc?: DocumentSnapshot
-): Promise<DiscoveryUser[]> => {
-  let q = query(
-    collection(db, COLLECTION),
-    where('privacy', '==', 'public'),
-    orderBy('weeklyClicks', 'desc'),
-    limit(limitCount)
-  );
+    if (category) {
+      q = query(
+        collection(db, COLLECTION),
+        where('privacy', '==', 'public'),
+        where('category', '==', category),
+        orderBy('weeklyClicks', 'desc'),
+        limit(20)
+      );
+    }
 
-  if (lastDoc) {
-    q = query(q, startAfter(lastDoc));
+    if (lastDoc) {
+      q = query(q, startAfter(lastDoc));
+    }
+
+    const snapshot = await getDocs(q);
+    const users: User[] = snapshot.docs.map(doc => doc.data() as User);
+    const lastVisible = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
+
+    return { users, lastVisible };
+  } catch (error) {
+    console.error('Error fetching public profiles:', error);
+    return { users: [], lastVisible: null };
   }
-
-  const snap = await getDocs(q);
-  return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as DiscoveryUser));
-};
-
-export const searchUsers = async (term: string): Promise<DiscoveryUser[]> => {
-  const q = query(collection(db, COLLECTION), where('privacy', '==', 'public'));
-  const snap = await getDocs(q);
-
-  return snap.docs
-    .map((doc) => ({ id: doc.id, ...(doc.data() as User) }))
-    .filter((user) => {
-      const searchStr = `${user.username} ${user.name} ${user.category}`.toLowerCase();
-      return searchStr.includes(term.toLowerCase());
-    });
-};
-
-export const getUsersByBadge = async (badgeType: string): Promise<DiscoveryUser[]> => {
-  const q = query(
-    collection(db, COLLECTION),
-    where('badges', 'array-contains', badgeType),
-    where('privacy', '==', 'public')
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as DiscoveryUser));
 };
