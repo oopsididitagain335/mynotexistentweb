@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { addMinutes } from 'date-fns';
 
 /**
- * Generate a secure token that expires in 15 minutes.
+ * Generate a secure 32-character token that expires in 15 minutes.
  */
 export const generateLinkToken = (): { token: string; expiresAt: Date } => {
   const token = uuidv4().replace(/-/g, '').substring(0, 32);
