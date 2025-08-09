@@ -2,9 +2,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { auth, db } from '@lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
-// Define the exact User interface as stored in Firestore
+// 🔐 Define the full User interface — includes follow/friend state
 export interface User {
   uid: string;
   email: string | null;
@@ -37,7 +37,11 @@ export interface User {
     label: string;
     url: string;
   }>;
-  createdAt?: any; // Firestore Timestamp
+  // 🌐 Follow/Friend relationships (stored as arrays of usernames or UIDs)
+  following?: string[];  // usernames or uids of who this user follows
+  followers?: string[];  // usernames or uids of who follows this user
+  friends?: string[];    // mutual follows
+  createdAt?: any;
 }
 
 interface AuthContextType {
@@ -86,14 +90,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       const data = userDocSnap.data();
 
-      // Validate required fields
+      // ✅ Validate required fields
       if (!data.uid || !data.username || !data.email) {
         setError('Profile data is invalid or incomplete.');
         setLoading(false);
         return;
       }
 
-      // Build safe User object with defaults
+      // ✅ Build safe User object with defaults
       const safeProfile: User = {
         uid: data.uid,
         email: data.email,
@@ -115,6 +119,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         publicKey: data.publicKey || '',
         privateKeyEncrypted: data.privateKeyEncrypted || null,
         links: Array.isArray(data.links) ? data.links : [],
+        following: Array.isArray(data.following) ? data.following : [],
+        followers: Array.isArray(data.followers) ? data.followers : [],
+        friends: Array.isArray(data.friends) ? data.friends : [],
         createdAt: data.createdAt || null,
       };
 
@@ -142,7 +149,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  const value = {
+  const value: AuthContextType = {
     currentUser,
     userProfile,
     loading,
