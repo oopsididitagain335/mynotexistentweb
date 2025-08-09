@@ -1,4 +1,3 @@
-// pages/index.tsx
 import React, { useState } from 'react';
 import Layout from '@components/Layout';
 import Link from 'next/link';
@@ -63,7 +62,7 @@ const Home: React.FC = () => {
                 <span className="text-gray-400">.lol</span>
               </h1>
             </div>
-            
+
             <nav className="flex gap-8">
               <Link href="/">
                 <a className="text-gray-300 hover:text-green-400 transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-green-400 after:transition-all after:duration-300 hover:after:w-full">
@@ -101,12 +100,12 @@ const Home: React.FC = () => {
             {/* Hero Section */}
             <section className="text-center mb-16 max-w-4xl mx-auto">
               <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6">
-                Your digital identity,
+                Everything you want,
                 <br />
-                <span className="bg-gradient-to-r from-green-400 to-green-500 bg-clip-text text-transparent">simplified</span>.
+                <span className="bg-gradient-to-r from-green-400 to-green-500 bg-clip-text text-transparent">right here.</span>
               </h1>
               <p className="text-xl text-gray-400 mb-12 max-w-2xl mx-auto">
-                Create stunning bio links, showcase your content, and connect with your audience. thebiolink.lol gives you the tools to build your online presence — beautifully.
+                thebiolink.lol is your go-to for modern, feature-rich bio links and fast, secure file hosting. Everything you need — right here.
               </p>
 
               {/* Username Input Form */}
@@ -126,13 +125,13 @@ const Home: React.FC = () => {
                     autoComplete="off"
                   />
                 </div>
-                
+
                 <button
                   type="submit"
                   disabled={!username.trim()}
-                  className="w-full bg-green-500 hover:bg-green-600 text-black px-8 py-4 rounded-full font-bold text-base md:text-lg transition-all duration-300 transform hover:translate-y-[-3px] disabled:opacity-50 disabled:transform-none disabled:cursor-not-allowed"
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-full font-bold text-base md:text-lg transition-all duration-300 transform hover:translate-y-[-3px] disabled:opacity-50 disabled:transform-none disabled:cursor-not-allowed"
                 >
-                  Claim Your Link →
+                  Claim Now →
                 </button>
               </form>
 
@@ -163,15 +162,15 @@ const Home: React.FC = () => {
           0% { opacity: 0.6; }
           100% { opacity: 0.9; }
         }
-        
+
         .animate-pulse {
           animation: pulse 20s infinite alternate;
         }
-        
+
         .animate-float {
           animation: float 6s ease-in-out infinite;
         }
-        
+
         @keyframes float {
           0% { transform: translateY(0px); }
           50% { transform: translateY(-10px); }
