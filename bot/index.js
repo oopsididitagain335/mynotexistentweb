@@ -1,22 +1,18 @@
-// Register module alias early
+// Must be first to register alias before any requires
 require('module-alias/register');
 
-const path = require('path');
-const fs = require('fs');
-const fetch = require('node-fetch'); // node-fetch v3 is ESM-only; for CJS, install v2 or use dynamic import
-
-// Import discord functions using alias
 const { createDiscordClient, registerDiscordCommands } = require('@lib/discord');
+const fs = require('fs');
+const path = require('path');
+const fetch = require('node-fetch');
 
-// Create Discord client
+// Create client
 const client = createDiscordClient();
 
-// Load commands from bot/commands folder
+// Load commands
 client.commands = new Map();
 const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.existsSync(commandsPath)
-  ? fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'))
-  : [];
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
 for (const file of commandFiles) {
   const filePath = path.join(commandsPath, file);
@@ -83,5 +79,5 @@ client.on('guildBanRemove', async (guild, user) => {
   }
 });
 
-// Login bot
+// Login
 client.login(process.env.DISCORD_BOT_TOKEN);
