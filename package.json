@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"next dev\" \"node -r module-alias/register bot/index.js\"",
+    "dev": "concurrently \"next dev\" \"node -r module-alias/register src/bot/index.js\"",
     "build": "next build",
-    "start": "concurrently \"next start\" \"node -r module-alias/register bot/index.js\""
+    "start": "concurrently \"next start\" \"node -r module-alias/register src/bot/index.js\""
   },
   "engines": {
     "node": ">=18.18.0 <19.0.0"
