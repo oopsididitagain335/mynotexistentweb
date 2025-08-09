@@ -1,9 +1,12 @@
 // bot/index.js
+require('module-alias/register');
+
 const { createDiscordClient, registerDiscordCommands } = require('@lib/discord');
 const fs = require('fs');
 const path = require('path');
+const fetch = require('node-fetch'); // Add fetch import for Node.js
 
-// Create client
+// Create Discord client
 const client = createDiscordClient();
 
 // Load commands
@@ -21,13 +24,13 @@ for (const file of commandFiles) {
   }
 }
 
-// Ready event
+// Bot ready event
 client.once('ready', () => {
   console.log(`🤖 Discord bot logged in as ${client.user.tag}`);
   registerDiscordCommands();
 });
 
-// Interaction (slash command) handler
+// Interaction handler
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isCommand()) return;
 
@@ -38,43 +41,53 @@ client.on('interactionCreate', async (interaction) => {
     await command.execute(interaction);
   } catch (error) {
     console.error(error);
-    await interaction.reply({ content: '❌ There was an error while executing this command.', ephemeral: true });
+    if (!interaction.replied) {
+      await interaction.reply({ content: '❌ There was an error while executing this command.', ephemeral: true });
+    }
   }
 });
 
-// Guild ban add (sync to web)
+// Sync ban add event
 client.on('guildBanAdd', async (guild, user) => {
   if (guild.id !== process.env.DISCORD_SERVER_ID) return;
 
-  const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/admin/sync-ban`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ discordId: user.id }),
-  });
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/admin/sync-ban`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ discordId: user.id }),
+    });
 
-  if (response.ok) {
-    console.log(`🔁 Ban synced for ${user.tag}`);
-  } else {
-    console.error(`❌ Failed to sync ban for ${user.tag}`);
+    if (response.ok) {
+      console.log(`🔁 Ban synced for ${user.tag}`);
+    } else {
+      console.error(`❌ Failed to sync ban for ${user.tag}`);
+    }
+  } catch (error) {
+    console.error(`❌ Error syncing ban for ${user.tag}`, error);
   }
 });
 
-// Guild ban remove (sync to web)
+// Sync ban remove event
 client.on('guildBanRemove', async (guild, user) => {
   if (guild.id !== process.env.DISCORD_SERVER_ID) return;
 
-  const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/admin/sync-unban`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ discordId: user.id }),
-  });
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/admin/sync-unban`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ discordId: user.id }),
+    });
 
-  if (response.ok) {
-    console.log(`🔁 Unban synced for ${user.tag}`);
-  } else {
-    console.error(`❌ Failed to sync unban for ${user.tag}`);
+    if (response.ok) {
+      console.log(`🔁 Unban synced for ${user.tag}`);
+    } else {
+      console.error(`❌ Failed to sync unban for ${user.tag}`);
+    }
+  } catch (error) {
+    console.error(`❌ Error syncing unban for ${user.tag}`, error);
   }
 });
 
-// Login
+// Login the bot
 client.login(process.env.DISCORD_BOT_TOKEN);
