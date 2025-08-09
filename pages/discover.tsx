@@ -1,12 +1,21 @@
-// pages/discover.tsx
 import React from 'react';
 import Layout from '@components/Layout';
-import { useDiscovery } from '@contexts/DiscoveryContext';
 import { useRouter } from 'next/router';
 
 const Discover: React.FC = () => {
-  const { users, loading, search, setFilters } = useDiscovery();
   const router = useRouter();
+
+  // Mock data since context is missing
+  const users = [
+    { id: 1, name: 'Jane Doe', username: 'jane', avatar: '/avatar1.png', category: 'Designer' },
+    { id: 2, name: 'John Smith', username: 'john', avatar: '/avatar2.png', category: 'Developer' },
+    { id: 3, name: 'Alex Johnson', username: 'alex', avatar: '/avatar3.png', category: 'Artist' },
+  ];
+  const loading = false;
+
+  const setFilters = () => {
+    // Placeholder for future filter logic
+  };
 
   return (
     <Layout title="Discover — thebiolink.lol">
@@ -17,7 +26,7 @@ const Discover: React.FC = () => {
             {['Designer', 'Developer', 'Artist', 'AI'].map((cat) => (
               <button
                 key={cat}
-                onClick={() => setFilters({ category: cat })}
+                onClick={() => setFilters()}
                 className="badge"
               >
                 {cat}
