@@ -50,8 +50,8 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
         throw new Error(`Search failed: ${res.status}`);
       }
 
-      // ✅ CORRECT: Declare a variable called 'data' of type PublicUser[]
-      const  PublicUser[] = await res.json();
+      // ✅ Correctly typed data variable
+      const data: PublicUser[] = await res.json();
 
       setResults(data);
     } catch (err: any) {
