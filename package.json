@@ -36,6 +36,9 @@
     "typescript": "^5.0.0",
     "concurrently": "^8.2.0"
   },
+  "_moduleAliases": {
+    "@lib": "src/lib"
+  },
   "browserslist": {
     "production": [
       ">0.2%",
