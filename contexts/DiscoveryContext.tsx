@@ -1,176 +1,108 @@
-// contexts/DiscoveryContext.tsx
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getTrendingUsers, searchUsers, getUsersByBadge } from '@lib/discovery';
+import {
+  collection,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  where,
+  startAfter,
+  DocumentSnapshot,
+} from 'firebase/firestore';
+import { db } from './firebase';
 
-// ✅ Full DiscoveryUser interface — matches Firestore
-export interface DiscoveryUser {
-  id: string;
+// Integrated User type
+export interface User {
+  id?: string;
   uid: string;
   username: string;
   name: string;
-  avatar: string;
-  bio: string;
-  category: string;
+  avatar?: string;
+  bio?: string;
+  category?: string;
   privacy: 'public' | 'followers' | 'friends' | 'hidden' | 'banned';
-  template: string;
-  darkMode: boolean;
-  banned: boolean;
-  linked: boolean;
-  weeklyClicks: number;
-  followersCount: number;
-  followingCount: number;
-  badges: string[];
-  links: Array<{ emoji: string; label: string; url: string }>;
+  template?: string;
+  darkMode?: boolean;
+  banned?: boolean;
+  linked?: boolean;
+  weeklyClicks?: number;
+  followersCount?: number;
+  followingCount?: number;
+  badges?: string[];
+  links?: Array<{ emoji: string; label: string; url: string }>;
   __snapshot?: any;
 }
 
-interface FilterOptions {
-  category?: string;
-  badge?: string;
-  template?: string;
-}
+const COLLECTION = 'users';
 
-interface DiscoveryContextType {
-  users: DiscoveryUser[];
-  loading: boolean;
-  error: string | null;
-  lastDoc: any;
-  hasMore: boolean;
-  filters: FilterOptions;
-  fetchUsers: (reset?: boolean) => Promise<void>;
-  search: (term: string) => Promise<void>;
-  setFilters: (filters: FilterOptions) => void;
-  loadMore: () => void;
-}
+/** Get trending users */
+export const getTrendingUsers = async (
+  limitCount = 20,
+  lastDoc?: DocumentSnapshot<User> | null
+) => {
+  let q = query(
+    collection(db, COLLECTION),
+    where('privacy', '==', 'public'),
+    orderBy('weeklyClicks', 'desc'),
+    limit(limitCount)
+  );
 
-const DiscoveryContext = createContext<DiscoveryContextType>({
-  users: [],
-  loading: true,
-  error: null,
-  lastDoc: null,
-  hasMore: false,
-  filters: {},
-  fetchUsers: async () => {},
-  search: async () => {},
-  setFilters: () => {},
-  loadMore: () => {},
-});
+  if (lastDoc) {
+    q = query(
+      collection(db, COLLECTION),
+      where('privacy', '==', 'public'),
+      orderBy('weeklyClicks', 'desc'),
+      startAfter(lastDoc),
+      limit(limitCount)
+    );
+  }
 
-// 🔹 Helper function to map raw Firestore data into typed DiscoveryUser[]
-const mapToDiscoveryUsers = (rawData: any[]): DiscoveryUser[] =>
-  rawData.map((item: any) => ({
-    id: item.id || item.uid || '',
-    uid: item.uid || 'unknown',
-    username: item.username || 'unknown',
-    name: item.name || item.username || 'Anonymous',
-    avatar: item.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anon',
-    bio: item.bio || '',
-    category: item.category || 'Unknown',
-    privacy: item.privacy || 'public',
-    template: item.template || 'minimal',
-    darkMode: Boolean(item.darkMode),
-    banned: Boolean(item.banned),
-    linked: Boolean(item.linked),
-    weeklyClicks: typeof item.weeklyClicks === 'number' ? item.weeklyClicks : 0,
-    followersCount: typeof item.followersCount === 'number' ? item.followersCount : 0,
-    followingCount: typeof item.followingCount === 'number' ? item.followingCount : 0,
-    badges: Array.isArray(item.badges) ? item.badges : [],
-    links: Array.isArray(item.links) ? item.links : [],
-    __snapshot: item.__snapshot || null,
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    ...(doc.data() as User),
+    id: doc.id,
+    __snapshot: doc,
   }));
-
-export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [users, setUsers] = useState<DiscoveryUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [lastDoc, setLastDoc] = useState<any>(null);
-  const [hasMore, setHasMore] = useState(true);
-  const [filters, setFilters] = useState<FilterOptions>({});
-
-  const fetchUsers = async (reset = false) => {
-    if (reset) {
-      setUsers([]);
-      setLastDoc(null);
-      setHasMore(true);
-    }
-
-    if (!hasMore) return;
-
-    try {
-      setLoading(true);
-      const rawData = await getTrendingUsers(20, reset ? null : lastDoc);
-      const data: DiscoveryUser[] = mapToDiscoveryUsers(rawData);
-
-      // Apply filters
-      let filteredData = data;
-      if (filters.category) {
-        filteredData = filteredData.filter(u => u.category === filters.category);
-      }
-      if (filters.badge) {
-        filteredData = filteredData.filter(u => u.badges.includes(filters.badge!));
-      }
-      if (filters.template) {
-        filteredData = filteredData.filter(u => u.template === filters.template);
-      }
-
-      setUsers(prev => (reset ? filteredData : [...prev, ...filteredData]));
-      setLastDoc(data.length ? data[data.length - 1].__snapshot : null);
-      setHasMore(data.length >= 20);
-    } catch (err) {
-      setError('Failed to load users');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const search = async (term: string) => {
-    if (!term.trim()) {
-      fetchUsers(true);
-      return;
-    }
-    try {
-      setLoading(true);
-      const results = await searchUsers(term);
-      const typedResults: DiscoveryUser[] = mapToDiscoveryUsers(results);
-      setUsers(typedResults);
-      setHasMore(false);
-    } catch (err) {
-      setError('Search failed');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadMore = () => {
-    if (!loading && hasMore) {
-      fetchUsers();
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers(true);
-  }, [filters]);
-
-  const value: DiscoveryContextType = {
-    users,
-    loading,
-    error,
-    lastDoc,
-    hasMore,
-    filters,
-    fetchUsers,
-    search,
-    setFilters,
-    loadMore,
-  };
-
-  return <DiscoveryContext.Provider value={value}>{children}</DiscoveryContext.Provider>;
 };
 
-export const useDiscovery = () => {
-  const context = useContext(DiscoveryContext);
-  if (!context) throw new Error('useDiscovery must be used within DiscoveryProvider');
-  return context;
+/** Search users by username or name */
+export const searchUsers = async (term: string) => {
+  if (!term.trim()) return [];
+
+  const q = query(
+    collection(db, COLLECTION),
+    where('privacy', '==', 'public'),
+    orderBy('username'),
+    limit(50)
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs
+    .map(doc => ({
+      ...(doc.data() as User),
+      id: doc.id,
+      __snapshot: doc,
+    }))
+    .filter(
+      user =>
+        user.username?.toLowerCase().includes(term.toLowerCase()) ||
+        user.name?.toLowerCase().includes(term.toLowerCase())
+    );
+};
+
+/** Get users that have a specific badge */
+export const getUsersByBadge = async (badge: string) => {
+  const q = query(
+    collection(db, COLLECTION),
+    where('privacy', '==', 'public'),
+    where('badges', 'array-contains', badge),
+    orderBy('weeklyClicks', 'desc'),
+    limit(20)
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    ...(doc.data() as User),
+    id: doc.id,
+    __snapshot: doc,
+  }));
 };
