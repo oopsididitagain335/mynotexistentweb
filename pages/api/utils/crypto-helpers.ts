@@ -8,9 +8,10 @@ let ALG: number;
 export const initSodium = async () => {
   if (!sodiumReady) {
     await sodium.ready;
-    OPSLIMIT = sodium.library_constants.crypto_pwhash_opslimit_interactive;
-    MEMLIMIT = sodium.library_constants.crypto_pwhash_memlimit_interactive;
-    ALG = sodium.library_constants.crypto_pwhash_alg_default;
+    // Correct way to access constants
+    OPSLIMIT = (sodium as any).crypto_pwhash_OPSLIMIT_INTERACTIVE;
+    MEMLIMIT = (sodium as any).crypto_pwhash_MEMLIMIT_INTERACTIVE;
+    ALG = (sodium as any).crypto_pwhash_ALG_DEFAULT;
     sodiumReady = true;
   }
 };
