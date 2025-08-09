@@ -4,17 +4,21 @@ import { NextApiRequest } from 'next';
 const requestCounts = new Map<string, { count: number; firstRequest: number }>();
 
 export const isRateLimited = (req: NextApiRequest): boolean => {
-  const windowMs = parseInt(process.env.RATE_LIMIT_WINDOW || '900') * 1000;
-  const maxRequests = parseInt(process.env.RATE_LIMIT_MAX || '100');
+  const windowMs = parseInt(process.env.RATE_LIMIT_WINDOW || '900', 10) * 1000;
+  const maxRequests = parseInt(process.env.RATE_LIMIT_MAX || '100', 10);
 
-  // Use IP + path for granular control
-  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.socket.remoteAddress;
+  const ip =
+    (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+    req.socket.remoteAddress ||
+    'unknown';
+
   const path = req.url || '/';
   const key = `${ip}:${path}`;
 
   const now = Date.now();
   const record = requestCounts.get(key) || { count: 0, firstRequest: now };
 
+  // Reset after window
   if (now - record.firstRequest > windowMs) {
     requestCounts.set(key, { count: 1, firstRequest: now });
     return false;
@@ -28,7 +32,7 @@ export const isRateLimited = (req: NextApiRequest): boolean => {
   return false;
 };
 
-export const resetRateLimit = (ip: string, path: string = '*') => {
+export const resetRateLimit = (ip: string, path: string = '*'): void => {
   if (path === '*') {
     for (const key of requestCounts.keys()) {
       if (key.startsWith(ip)) {
