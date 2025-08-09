@@ -2,16 +2,13 @@ import React from 'react';
 import Layout from '@components/Layout';
 import { useRouter } from 'next/router';
 
-const Discover: React.FC = () => {
+const Discover = () => {
   const router = useRouter();
 
-  // Empty state when context is missing
-  const users = [];
+  const users: Array<{ id: string; name: string; username: string; avatar: string; category: string }> = [];
   const loading = false;
 
-  const setFilters = () => {
-    // Placeholder for filter logic
-  };
+  const setFilters = () => {};
 
   return (
     <Layout title="Discover — thebiolink.lol">
@@ -22,7 +19,7 @@ const Discover: React.FC = () => {
             {['Designer', 'Developer', 'Artist', 'AI'].map((cat) => (
               <button
                 key={cat}
-                onClick={() => setFilters()}
+                onClick={setFilters}
                 className="badge"
               >
                 {cat}
@@ -31,26 +28,6 @@ const Discover: React.FC = () => {
           </div>
         </div>
         <div className="discover-grid">
-          {users.map((user) => (
-            <div
-              key={user.id}
-              className="discover-card"
-              onClick={() => router.push(`/${user.username}`)}
-            >
-              <img src={user.avatar} alt={user.name} className="avatar-lg mb-2" />
-              <strong>{user.name}</strong>
-              <span className="text-gray-500 dark:text-gray-400">@{user.username}</span>
-              <span className="badge badge-accent mt-2">{user.category}</span>
-            </div>
-          ))}
-        </div>
-        {loading && <div className="loader mx-auto my-6"></div>}
-      </div>
-    </Layout>
-  );
-};
-
-export default Discover;        <div className="discover-grid">
           {users.map((user) => (
             <div
               key={user.id}
