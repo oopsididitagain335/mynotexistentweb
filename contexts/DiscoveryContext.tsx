@@ -10,7 +10,6 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 
-// Integrated User type
 export interface User {
   id?: string;
   uid: string;
@@ -34,27 +33,18 @@ export interface User {
 
 const COLLECTION = 'users';
 
-/** Get trending users */
 export const getTrendingUsers = async (
   limitCount = 20,
   lastDoc?: DocumentSnapshot<User> | null
 ) => {
-  let q = query(
-    collection(db, COLLECTION),
+  const constraints = [
     where('privacy', '==', 'public'),
     orderBy('weeklyClicks', 'desc'),
-    limit(limitCount)
-  );
+  ];
+  if (lastDoc) constraints.push(startAfter(lastDoc));
+  constraints.push(limit(limitCount));
 
-  if (lastDoc) {
-    q = query(
-      collection(db, COLLECTION),
-      where('privacy', '==', 'public'),
-      orderBy('weeklyClicks', 'desc'),
-      startAfter(lastDoc),
-      limit(limitCount)
-    );
-  }
+  const q = query(collection(db, COLLECTION), ...constraints);
 
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => ({
@@ -64,7 +54,6 @@ export const getTrendingUsers = async (
   }));
 };
 
-/** Search users by username or name */
 export const searchUsers = async (term: string) => {
   if (!term.trim()) return [];
 
@@ -84,12 +73,11 @@ export const searchUsers = async (term: string) => {
     }))
     .filter(
       user =>
-        user.username?.toLowerCase().includes(term.toLowerCase()) ||
-        user.name?.toLowerCase().includes(term.toLowerCase())
+        user.username.toLowerCase().includes(term.toLowerCase()) ||
+        user.name.toLowerCase().includes(term.toLowerCase())
     );
 };
 
-/** Get users that have a specific badge */
 export const getUsersByBadge = async (badge: string) => {
   const q = query(
     collection(db, COLLECTION),
