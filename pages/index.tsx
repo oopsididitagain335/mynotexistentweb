@@ -1,23 +1,33 @@
-import React, { useState } from 'react';
+// pages/index.tsx
+import React from 'react';
+import Layout from '@components/Layout';
 import Link from 'next/link';
-import '../styles/globals.css';  // Import CSS file here
 
-const Index: React.FC = () => {
-  const [username, setUsername] = useState('');
-
-  const handleClaim = () => {
-    if (!username.trim()) {
-      alert('Please enter a username.');
-      return;
-    }
-    window.location.href = `/signup?username=${encodeURIComponent(username.trim())}`;
-  };
-
+const Home: React.FC = () => {
   return (
-    <main className="indexMain bg-gradient-to-br from-gray-950 via-gray-900 to-purple-950 text-gray-100 relative overflow-x-hidden">
-      {/* ...rest of your code */}
-    </main>
+    <Layout title="thebiolink.lol — Your Identity. Your Consequences." noNav>
+      <div className="page-home text-center">
+        <h1 className="hero">
+          <span className="text-heading">Your Link. Your Server. Your Identity.</span>
+          <br />
+          <span className="text-subhead">One profile. Zero compromises.</span>
+        </h1>
+
+        <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
+          <Link href="/signup">
+            <a className="btn btn-primary px-8 py-3 text-lg">Get Started</a>
+          </Link>
+          <Link href="/login">
+            <a className="btn btn-outline px-8 py-3">Log In</a>
+          </Link>
+        </div>
+
+        <div className="mt-16 text-sm text-gray-500 dark:text-gray-400">
+          Built for creators, hackers, and digital citizens.
+        </div>
+      </div>
+    </Layout>
   );
 };
 
-export default Index;
+export default Home;
