@@ -1,87 +1,52 @@
-// pages/message/send.tsx
-import React, { useState } from 'react';
-import Layout from '@components/Layout'; // ✅ Correct value import, not `import type`
-import { useAuth } from '@contexts/AuthContext';
+// pages/api/message/send.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { db } from '@lib/firebase';
+import { doc, getDoc, collection, addDoc } from 'firebase/firestore';
+import { encryptMessage } from '@lib/crypto';
 
-export default function SendMessagePage() {
-  const { user } = useAuth();
-  const [recipientId, setRecipientId] = useState('');
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(false);
+  const { senderId, recipientId, message } = req.body;
 
-    if (!recipientId.trim() || !message.trim()) {
-      setError('Recipient ID and message are required.');
-      return;
+  if (!senderId || !recipientId || !message) {
+    return res.status(400).json({
+      error: 'Missing required fields: senderId, recipientId, message',
+    });
+  }
+
+  try {
+    // Check recipient exists
+    const recipientDoc = await getDoc(doc(db, 'users', recipientId));
+    if (!recipientDoc.exists()) {
+      return res.status(404).json({ error: 'Recipient not found' });
     }
 
-    setLoading(true);
-    try {
-      const res = await fetch('/api/message/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          senderId: user?.uid,
-          recipientId,
-          message,
-        }),
-      });
+    const recipientData = recipientDoc.data();
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to send message');
-      }
-
-      setRecipientId('');
-      setMessage('');
-      setSuccess(true);
-    } catch (err: any) {
-      setError(err.message || 'An error occurred');
-    } finally {
-      setLoading(false);
+    if (!recipientData?.publicKey) {
+      return res.status(400).json({ error: 'Recipient has no public key' });
     }
-  };
 
-  return (
-    <Layout title="Send Message">
-      <div className="max-w-md mx-auto py-8">
-        <h1 className="text-2xl font-bold mb-6">Send a Message</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Recipient ID</label>
-            <input
-              type="text"
-              value={recipientId}
-              onChange={(e) => setRecipientId(e.target.value)}
-              className="w-full border rounded px-3 py-2 dark:bg-gray-800"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Message</label>
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="w-full border rounded px-3 py-2 dark:bg-gray-800"
-              rows={4}
-            />
-          </div>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          {success && <p className="text-green-500 text-sm">Message sent successfully!</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded"
-          >
-            {loading ? 'Sending...' : 'Send Message'}
-          </button>
-        </form>
-      </div>
-    </Layout>
-  );
+    // Encrypt message
+    const encrypted = encryptMessage(message, recipientData.publicKey);
+
+    // Save encrypted message to Firestore
+    await addDoc(collection(db, 'messages'), {
+      senderId,
+      recipientId,
+      ciphertext: encrypted.ciphertext,
+      ephemeralPublicKey: encrypted.ephemeralPublicKey,
+      nonce: encrypted.nonce,
+      timestamp: new Date(),
+      read: false,
+    });
+
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Send message error:', error);
+    return res.status(500).json({ error: 'Failed to send message' });
+  }
 }
