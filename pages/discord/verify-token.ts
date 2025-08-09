@@ -1,28 +1,39 @@
-// pages/api/discord/verify-token.ts
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getAuth } from 'firebase/auth';
 import { db } from '@lib/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { isValidToken } from '@lib/tokens';
+import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { token } = req.query;
-  if (!token || typeof token !== 'string') {
-    return res.status(400).json({ error: 'Token required' });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+
+  const user = getAuth().currentUser;
+  if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ error: 'Token required' });
 
   try {
-    const tokenDoc = await getDoc(doc(db, 'linkTokens', token));
-    if (!tokenDoc.exists() || tokenDoc.data().used) {
-      return res.status(404).json({ error: 'Invalid or used token' });
+    const tokenDocRef = doc(db, 'discordTokens', user.uid);
+    const tokenDoc = await getDoc(tokenDocRef);
+
+    if (!tokenDoc.exists()) return res.status(404).json({ error: 'Token not found' });
+
+    const { token: storedToken, expiresAt } = tokenDoc.data();
+
+    if (storedToken !== token) return res.status(403).json({ error: 'Invalid token' });
+    if (Date.now() > expiresAt) {
+      await deleteDoc(tokenDocRef);
+      return res.status(403).json({ error: 'Token expired' });
     }
 
-    const data = tokenDoc.data();
-    if (!isValidToken(data.expiresAt.toDate())) {
-      return res.status(410).json({ error: 'Token expired' });
-    }
+    // Verified - you can proceed with your logic here
 
-    return res.status(200).json({ valid: true, userId: data.userId });
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message });
+    // Optionally delete token after verification to prevent reuse
+    await deleteDoc(tokenDocRef);
+
+    res.status(200).json({ success: true, message: 'Token verified' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to verify token' });
   }
 }
