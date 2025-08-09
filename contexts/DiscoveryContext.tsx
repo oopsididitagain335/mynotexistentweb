@@ -40,7 +40,7 @@ interface DiscoveryContextType {
   fetchUsers: (reset?: boolean) => Promise<void>;
   search: (term: string) => Promise<void>;
   setFilters: (filters: FilterOptions) => void;
-  loadMore: () => void; // ← Required
+  loadMore: () => void;
 }
 
 const DiscoveryContext = createContext<DiscoveryContextType>({
@@ -53,8 +53,31 @@ const DiscoveryContext = createContext<DiscoveryContextType>({
   fetchUsers: async () => {},
   search: async () => {},
   setFilters: () => {},
-  loadMore: () => {}, // ← Must be initialized
+  loadMore: () => {},
 });
+
+// 🔹 Helper function to map raw Firestore data into typed DiscoveryUser[]
+const mapToDiscoveryUsers = (rawData: any[]): DiscoveryUser[] =>
+  rawData.map((item: any) => ({
+    id: item.id || item.uid || '',
+    uid: item.uid || 'unknown',
+    username: item.username || 'unknown',
+    name: item.name || item.username || 'Anonymous',
+    avatar: item.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anon',
+    bio: item.bio || '',
+    category: item.category || 'Unknown',
+    privacy: item.privacy || 'public',
+    template: item.template || 'minimal',
+    darkMode: Boolean(item.darkMode),
+    banned: Boolean(item.banned),
+    linked: Boolean(item.linked),
+    weeklyClicks: typeof item.weeklyClicks === 'number' ? item.weeklyClicks : 0,
+    followersCount: typeof item.followersCount === 'number' ? item.followersCount : 0,
+    followingCount: typeof item.followingCount === 'number' ? item.followingCount : 0,
+    badges: Array.isArray(item.badges) ? item.badges : [],
+    links: Array.isArray(item.links) ? item.links : [],
+    __snapshot: item.__snapshot || null,
+  }));
 
 export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [users, setUsers] = useState<DiscoveryUser[]>([]);
@@ -75,28 +98,8 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     try {
       setLoading(true);
-      let rawData = await getTrendingUsers(20, lastDoc);
-
-      const  DiscoveryUser[] = rawData.map((item: any) => ({
-        id: item.id || item.uid || '',
-        uid: item.uid || 'unknown',
-        username: item.username || 'unknown',
-        name: item.name || item.username || 'Anonymous',
-        avatar: item.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anon',
-        bio: item.bio || '',
-        category: item.category || 'Unknown',
-        privacy: item.privacy || 'public',
-        template: item.template || 'minimal',
-        darkMode: Boolean(item.darkMode),
-        banned: Boolean(item.banned),
-        linked: Boolean(item.linked),
-        weeklyClicks: typeof item.weeklyClicks === 'number' ? item.weeklyClicks : 0,
-        followersCount: typeof item.followersCount === 'number' ? item.followersCount : 0,
-        followingCount: typeof item.followingCount === 'number' ? item.followingCount : 0,
-        badges: Array.isArray(item.badges) ? item.badges : [],
-        links: Array.isArray(item.links) ? item.links : [],
-        __snapshot: item.__snapshot || null,
-      }));
+      const rawData = await getTrendingUsers(20, reset ? null : lastDoc);
+      const data: DiscoveryUser[] = mapToDiscoveryUsers(rawData);
 
       // Apply filters
       let filteredData = data;
@@ -129,25 +132,7 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
     try {
       setLoading(true);
       const results = await searchUsers(term);
-      const typedResults: DiscoveryUser[] = results.map((item: any) => ({
-        id: item.id || item.uid || '',
-        uid: item.uid || 'unknown',
-        username: item.username || 'unknown',
-        name: item.name || item.username || 'Anonymous',
-        avatar: item.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anon',
-        bio: item.bio || '',
-        category: item.category || 'Unknown',
-        privacy: item.privacy || 'public',
-        template: item.template || 'minimal',
-        darkMode: Boolean(item.darkMode),
-        banned: Boolean(item.banned),
-        linked: Boolean(item.linked),
-        weeklyClicks: typeof item.weeklyClicks === 'number' ? item.weeklyClicks : 0,
-        followersCount: typeof item.followersCount === 'number' ? item.followersCount : 0,
-        followingCount: typeof item.followingCount === 'number' ? item.followingCount : 0,
-        badges: Array.isArray(item.badges) ? item.badges : [],
-        links: Array.isArray(item.links) ? item.links : [],
-      }));
+      const typedResults: DiscoveryUser[] = mapToDiscoveryUsers(results);
       setUsers(typedResults);
       setHasMore(false);
     } catch (err) {
@@ -168,7 +153,6 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
     fetchUsers(true);
   }, [filters]);
 
-  // ✅ Fixed: `loadMore` is now included in `value`
   const value: DiscoveryContextType = {
     users,
     loading,
@@ -179,7 +163,7 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
     fetchUsers,
     search,
     setFilters,
-    loadMore, // ← Now included
+    loadMore,
   };
 
   return <DiscoveryContext.Provider value={value}>{children}</DiscoveryContext.Provider>;
