@@ -1,5 +1,6 @@
 // pages/_app.tsx
 import React from 'react';
+import type { AppProps } from 'next/app';
 import { AuthProvider } from '@contexts/AuthContext';
 import { ThemeProvider } from '@contexts/ThemeContext';
 import { DiscoveryProvider } from '@contexts/DiscoveryContext';
@@ -8,7 +9,7 @@ import { SecurityProvider } from '@contexts/SecurityContext';
 import Layout from '@components/Layout';
 import '../styles/globals.css';
 
-function MyApp({ Component, pageProps }) {
+function MyApp({ Component, pageProps }: AppProps) {
   return (
     <ThemeProvider>
       <AuthProvider>
