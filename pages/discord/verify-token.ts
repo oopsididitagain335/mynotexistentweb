@@ -1,39 +1,61 @@
+// pages/api/token/send.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getAuth } from 'firebase/auth';
-import { db } from '@lib/firebase';
-import { doc, getDoc, deleteDoc } from 'firebase/firestore';
+import admin from 'firebase-admin';
+import { doc, getDoc, deleteDoc, getFirestore } from 'firebase/firestore';
+
+// Initialize Firebase Admin once
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}')),
+  });
+}
+
+const db = getFirestore();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+  if (req.method !== 'POST')
+    return res.status(405).json({ error: 'Method Not Allowed' });
 
-  const user = getAuth().currentUser;
-  if (!user) return res.status(401).json({ error: 'Unauthorized' });
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer '))
+    return res.status(401).json({ error: 'Unauthorized: No token' });
 
-  const { token } = req.body;
-  if (!token) return res.status(400).json({ error: 'Token required' });
+  const idToken = authHeader.split('Bearer ')[1];
 
   try {
-    const tokenDocRef = doc(db, 'discordTokens', user.uid);
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const userId = decodedToken.uid;
+
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ error: 'Token required' });
+
+    const tokenDocRef = doc(db, 'discordTokens', userId);
     const tokenDoc = await getDoc(tokenDocRef);
 
-    if (!tokenDoc.exists()) return res.status(404).json({ error: 'Token not found' });
+    if (!tokenDoc.exists())
+      return res.status(404).json({ error: 'Token not found' });
 
-    const { token: storedToken, expiresAt } = tokenDoc.data();
+    const { token: storedToken, expiresAt } = tokenDoc.data() as {
+      token: string;
+      expiresAt: number;
+    };
 
-    if (storedToken !== token) return res.status(403).json({ error: 'Invalid token' });
+    if (storedToken !== token)
+      return res.status(403).json({ error: 'Invalid token' });
+
     if (Date.now() > expiresAt) {
       await deleteDoc(tokenDocRef);
       return res.status(403).json({ error: 'Token expired' });
     }
 
-    // Verified - you can proceed with your logic here
+    // Token verified: Proceed with your logic here
 
-    // Optionally delete token after verification to prevent reuse
+    // Optional: delete token after use to prevent reuse
     await deleteDoc(tokenDocRef);
 
-    res.status(200).json({ success: true, message: 'Token verified' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to verify token' });
+    return res.status(200).json({ success: true, message: 'Token verified' });
+  } catch (err: any) {
+    console.error('Verification error:', err);
+    return res.status(401).json({ error: 'Unauthorized or invalid token' });
   }
 }
