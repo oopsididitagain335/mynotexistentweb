@@ -1,7 +1,7 @@
 // @contexts/DiscoveryContext.tsx
 import { createContext, useContext, useState, ReactNode } from 'react';
 
-// 🔹 Define Public User Shape
+// 🔹 Define the shape of a public user
 export interface PublicUser {
   id: string;
   username?: string;
@@ -14,7 +14,7 @@ export interface PublicUser {
   weeklyClicks?: number;
 }
 
-// 🔹 Context Interface
+// 🔹 Define the context type
 export interface DiscoveryContextType {
   search: (query: string) => Promise<void>;
   results: PublicUser[];
@@ -22,7 +22,7 @@ export interface DiscoveryContextType {
   error: string | null;
 }
 
-// 🔹 Create Context with Proper Default
+// 🔹 Create the context
 const DiscoveryContext = createContext<DiscoveryContextType | undefined>(undefined);
 
 // 🔹 Provider Component
@@ -50,7 +50,9 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
         throw new Error(`Search failed: ${res.status}`);
       }
 
+      // ✅ CORRECT: Declare variable 'data' with type 'PublicUser[]'
       const  PublicUser[] = await res.json();
+
       setResults(data);
     } catch (err: any) {
       console.error('Search error:', err);
@@ -75,7 +77,7 @@ export const DiscoveryProvider: React.FC<{ children: ReactNode }> = ({ children 
   );
 };
 
-// 🔹 Custom Hook (Safe)
+// 🔹 Custom Hook
 export const useDiscovery = (): DiscoveryContextType => {
   const context = useContext(DiscoveryContext);
   if (!context) {
