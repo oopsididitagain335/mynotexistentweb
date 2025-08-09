@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "node -r module-alias/register bot/index.js & next start"
+    "start": "next start",
+    "start-bot": "node -r module-alias/register src/bot/index.js"
   },
   "engines": {
     "node": ">=18.18.0 <19.0.0"
@@ -24,7 +25,7 @@
     "recharts": "^2.7.0",
     "libsodium-wrappers": "^0.7.10",
     "discord.js": "^14.15.3",
-    "node-fetch": "^2.6.7",
+    "node-fetch": "^3.3.2",
     "module-alias": "^2.2.2"
   },
   "devDependencies": {
@@ -36,7 +37,7 @@
     "typescript": "^5.0.0"
   },
   "_moduleAliases": {
-    "@lib": "src/lib"
+    "@lib": "lib"
   },
   "browserslist": {
     "production": [
