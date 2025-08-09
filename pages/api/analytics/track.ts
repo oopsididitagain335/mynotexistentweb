@@ -1,12 +1,14 @@
 // pages/api/analytics/track.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '@lib/firebase';
-import { doc, getDoc, setDoc, increment } from 'firebase/firestore';
-import { addDays, format } from 'date-fns';
+import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore'; // ✅ Added updateDoc
+import { format } from 'date-fns';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { uid } = req.query;
-  if (!uid) return res.status(400).json({ error: 'User ID required' });
+  if (!uid || typeof uid !== 'string') {
+    return res.status(400).json({ error: 'User ID required' });
+  }
 
   const date = format(new Date(), 'yyyy-MM-dd');
   const ref = doc(db, `analytics/${uid}/daily`, date);
@@ -19,12 +21,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await setDoc(ref, { date, clicks: 1 });
     }
 
-    // Also update user's weeklyClicks
+    // Update user's weeklyClicks
     const userRef = doc(db, 'users', uid);
     await updateDoc(userRef, { weeklyClicks: increment(1) });
 
     return res.status(200).json({ success: true });
   } catch (err: any) {
+    console.error('Analytics track error:', err);
     return res.status(500).json({ error: err.message });
   }
 }
