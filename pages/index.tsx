@@ -1,4 +1,3 @@
-// pages/index.tsx
 import React from 'react';
 import Layout from '@components/Layout';
 import Link from 'next/link';
@@ -14,10 +13,10 @@ const Home: React.FC = () => {
         </h1>
 
         <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
-          <Link href="/signup">
+          <Link href="/signup" passHref>
             <a className="btn btn-primary px-8 py-3 text-lg">Get Started</a>
           </Link>
-          <Link href="/login">
+          <Link href="/login" passHref>
             <a className="btn btn-outline px-8 py-3">Log In</a>
           </Link>
         </div>
