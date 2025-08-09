@@ -17,12 +17,13 @@ export default function HomePage() {
 
   const router = useRouter();
 
-  // Validate format
-  const isValidFormat = /^[a-zA-Z0-9_-]{3,20}$/.test(username.trim());
   const trimmed = username.trim();
   const cleanUsername = trimmed.toLowerCase();
 
-  // Reset availability when input changes
+  // Validate format: 3–20 chars, letters, numbers, _, -
+  const isValidFormat = /^[a-zA-Z0-9_-]{3,20}$/.test(trimmed);
+
+  // Reset state when input changes
   useEffect(() => {
     if (trimmed === '') {
       setIsAvailable(null);
@@ -39,25 +40,19 @@ export default function HomePage() {
     }
 
     setIsChecking(true);
+
     const timer = setTimeout(async () => {
       try {
         const userDocRef = doc(db, 'usernames', cleanUsername);
-        console.log('Checking Firestore for:', cleanUsername);
         const snap = await getDoc(userDocRef);
 
-        if (!snap.exists()) {
-          console.log('✅ Username available:', cleanUsername);
-          setIsAvailable(true);
-        } else {
-          console.log('❌ Username taken:', cleanUsername);
-          setIsAvailable(false);
-        }
+        setIsAvailable(!snap.exists());
       } catch (error: any) {
-        console.error('Firestore error:', error);
-        // Don't assume "taken" on error — show generic error
+        console.error('Firestore check failed:', error);
+        // Don't mark as taken on error — just show warning
         setIsAvailable(null);
-        setMessage(`⚠️ Connection issue: ${error.message}`);
         setShowToast('error');
+        setMessage(`⚠️ Network error: ${error.message}`);
         setTimeout(() => setShowToast(null), 3000);
       } finally {
         setIsChecking(false);
@@ -67,20 +62,19 @@ export default function HomePage() {
     return () => clearTimeout(timer);
   }, [cleanUsername, isValidFormat]);
 
-  // Mouse glow effect
+  // Mouse move handler with typed event
   useEffect(() => {
-    const handleMove = (e) => {
+    const handleMove = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
     };
+
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
   }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValidFormat || !trimmed) return;
-    if (isAvailable !== true) return;
-    if (isSubmitting) return;
+    if (!isValidFormat || isAvailable !== true || isSubmitting) return;
 
     setIsSubmitting(true);
     try {
@@ -91,19 +85,21 @@ export default function HomePage() {
         throw new Error('Username already taken');
       }
 
-      // In a full app, you'd use `setDoc` here
-      // await setDoc(userDocRef, { ...data })
+      // 🚨 In production, save with setDoc here
+      // await setDoc(userDocRef, {
+      //   username: cleanUsername,
+      //   claimedAt: new Date().toISOString(),
+      // });
 
-      console.log('🎉 Claimed:', cleanUsername);
+      // For demo: just simulate success
       setShowToast('success');
       setMessage(`✅ Success! thebiolink.lol/${cleanUsername}`);
       setTimeout(() => {
         router.push(`/${cleanUsername}`);
       }, 1000);
     } catch (error: any) {
-      console.error('Claim failed:', error);
       setShowToast('error');
-      setMessage(`❌ ${error.message || 'Failed to claim'}`);
+      setMessage(`❌ ${error.message || 'Claim failed'}`);
     } finally {
       setIsSubmitting(false);
       setTimeout(() => setShowToast(null), 3000);
@@ -112,6 +108,7 @@ export default function HomePage() {
 
   return (
     <div className="container">
+      {/* Glow effect */}
       <div
         className="radial-glow"
         style={{
@@ -140,11 +137,11 @@ export default function HomePage() {
 
           {/* Status Messages */}
           {trimmed && !isValidFormat && (
-            <p className="error-text">Use 3–20 characters: letters, numbers, _ or -</p>
+            <p className="error-text">3–20 characters: letters, numbers, _ or - only.</p>
           )}
 
           {isChecking && (
-            <p className="status">Searching...</p>
+            <p className="status">Checking availability...</p>
           )}
 
           {isAvailable === true && !isChecking && (
@@ -164,11 +161,12 @@ export default function HomePage() {
           </button>
         </form>
 
-        {/* Example Devices */}
+        {/* Example Mobile Devices */}
         <section className="examples">
           <h2 className="examples-title">How It Looks</h2>
           <div className="profile-examples">
-            <div className="mobile-device artist">
+            {/* Artist */}
+            <div className="mobile-device">
               <div className="device-frame">
                 <div className="camera"></div>
                 <div className="screen">
@@ -184,7 +182,8 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="mobile-device gamer">
+            {/* Gamer */}
+            <div className="mobile-device">
               <div className="device-frame">
                 <div className="camera"></div>
                 <div className="screen">
@@ -200,7 +199,8 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="mobile-device music">
+            {/* Music */}
+            <div className="mobile-device">
               <div className="device-frame">
                 <div className="camera"></div>
                 <div className="screen">
@@ -226,6 +226,7 @@ export default function HomePage() {
         </footer>
       </main>
 
+      {/* Toast Notification */}
       {showToast && (
         <div className={`toast ${showToast}`}>
           {message}
@@ -241,8 +242,8 @@ export default function HomePage() {
           background: #0f0f11;
           color: white;
           position: relative;
-          font-family: 'Inter', sans-serif;
           overflow: hidden;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
         .radial-glow {
