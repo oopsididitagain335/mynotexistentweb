@@ -1,15 +1,17 @@
-// lib/crypto.ts
 import * as sodium from 'libsodium-wrappers';
 
 await sodium.ready;
+
+// Cast to any so TS won't complain about missing declarations
 const {
   crypto_box_keypair,
-  crypto_box_seed_keypair,
   crypto_secretbox_easy,
   crypto_secretbox_open_easy,
   from_base64,
   to_base64,
-} = sodium;
+} = sodium as any;
+
+const crypto_box_seed_keypair = (sodium as any).crypto_box_seed_keypair;
 
 // Generate X25519 key pair
 export const generateKeyPair = () => {
@@ -20,15 +22,15 @@ export const generateKeyPair = () => {
   };
 };
 
-// Derive key from password (PBKDF2)
+// Derive key from password
 export const deriveKeyFromPassword = (password: string, salt: Uint8Array): Uint8Array => {
-  return sodium.crypto_pwhash(
+  return (sodium as any).crypto_pwhash(
     32,
     password,
     salt,
-    sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE,
-    sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE,
-    sodium.crypto_pwhash_ALG_DEFAULT
+    (sodium as any).crypto_pwhash_OPSLIMIT_INTERACTIVE,
+    (sodium as any).crypto_pwhash_MEMLIMIT_INTERACTIVE,
+    (sodium as any).crypto_pwhash_ALG_DEFAULT
   );
 };
 
@@ -75,7 +77,7 @@ export const encryptMessage = (message: string, recipientPublicKey: string) => {
   const publicKey = from_base64(recipientPublicKey);
   const privateKey = sender.privateKey;
   const plaintext = Uint8Array.from(Buffer.from(message));
-  const ciphertext = sodium.crypto_box_easy(plaintext, nonce, publicKey, privateKey);
+  const ciphertext = (sodium as any).crypto_box_easy(plaintext, nonce, publicKey, privateKey);
   return {
     ciphertext: to_base64(ciphertext),
     ephemeralPublicKey: to_base64(sender.publicKey),
@@ -95,7 +97,7 @@ export const decryptMessage = (
     const epk = from_base64(ephemeralPublicKey);
     const n = from_base64(nonce);
     const sk = from_base64(yourPrivateKey);
-    const plaintext = sodium.crypto_box_open_easy(c, n, epk, sk);
+    const plaintext = (sodium as any).crypto_box_open_easy(c, n, epk, sk);
     return Buffer.from(plaintext).toString('utf8');
   } catch {
     return null;
