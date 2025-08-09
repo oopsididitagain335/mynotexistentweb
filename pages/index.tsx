@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 
-// 🔥 Import Firebase using relative path to avoid @/ alias issues
+// Firebase imports using relative path
 import { db, auth } from '../firebase/config';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
@@ -31,7 +31,7 @@ export default function HomePage() {
           const snap = await getDoc(userDocRef);
           setIsAvailable(!snap.exists());
         } catch (error) {
-          console.error('Check failed:', error);
+          console.error('Failed to check username:', error);
           setIsAvailable(false);
         } finally {
           setIsChecking(false);
@@ -73,7 +73,7 @@ export default function HomePage() {
         uid: auth.currentUser?.uid || null,
       });
 
-      // Success
+      // Show success and redirect
       setShowToast('success');
       setMessage(`✅ Successfully claimed thebiolink.lol/${username}`);
       setTimeout(() => {
@@ -148,16 +148,24 @@ export default function HomePage() {
 
         <nav className="hidden md:flex items-center gap-8 text-sm">
           <Link href="/help">
-            <a className="text-gray-300 hover:text-white transition">Help</a>
+            <a className="text-gray-300 hover:text-white transition cursor-pointer">Help</a>
           </Link>
-          <a href="https://discord.gg" target="_blank" className="text-gray-300 hover:text-white transition">
+
+          <a
+            href="https://discord.gg"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-300 hover:text-white transition"
+          >
             Discord
-          </Link>
+          </a>
+
           <Link href="/pricing">
-            <a className="text-gray-300 hover:text-white transition">Pricing</a>
+            <a className="text-gray-300 hover:text-white transition cursor-pointer">Pricing</a>
           </Link>
+
           <Link href="/login">
-            <a className="text-green-400 hover:underline transition">Log In</a>
+            <a className="text-green-400 hover:underline transition cursor-pointer">Log In</a>
           </Link>
         </nav>
       </header>
@@ -214,7 +222,7 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* Feedback */}
+          {/* Feedback Messages */}
           {username && !isValid && (
             <p className="text-red-500 text-xs mt-2 ml-4 text-left">
               Use 3–20 characters: letters, numbers, _, or -
@@ -230,7 +238,11 @@ export default function HomePage() {
 
         {/* Toast Notification */}
         {showToast && (
-          <div className={`fixed top-20 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-lg z-50 text-sm font-medium animate-fade-in-up ${showToast === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+          <div
+            className={`fixed top-20 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-lg z-50 text-sm font-medium animate-fade-in_up ${
+              showToast === 'success' ? 'bg-green-600' : 'bg-red-600'
+            }`}
+          >
             {message}
           </div>
         )}
@@ -247,8 +259,11 @@ export default function HomePage() {
       {/* Device Mockups */}
       <div className="relative z-10 max-w-5xl mx-auto px-6 pb-20 flex justify-center">
         <div className="relative w-full max-w-3xl aspect-video">
-          {/* Laptop */}
-          <div className="absolute top-0 left-1/3 transform -translate-x-1/2 animate-float" style={{ animationDelay: '0s' }}>
+          {/* Laptop Mockup */}
+          <div
+            className="absolute top-0 left-1/3 transform -translate-x-1/2 animate-float"
+            style={{ animationDelay: '0s' }}
+          >
             <div className="w-72 h-48 bg-slate-900 border border-gray-700 rounded-t-xl rounded-b-sm shadow-2xl overflow-hidden">
               <div className="h-6 bg-gray-800 flex items-center px-2 space-x-1">
                 <div className="w-3 h-3 bg-red-500 rounded-full"></div>
@@ -263,8 +278,11 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Mobile */}
-          <div className="absolute top-16 right-1/3 transform translate-x-1/2 animate-float" style={{ animationDelay: '1.5s' }}>
+          {/* Mobile Mockup */}
+          <div
+            className="absolute top-16 right-1/3 transform translate-x-1/2 animate-float"
+            style={{ animationDelay: '1.5s' }}
+          >
             <div className="w-36 h-64 bg-black border border-gray-700 rounded-3xl shadow-2xl overflow-hidden relative">
               <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-800 rounded-full"></div>
               <div className="p-3 text-xs text-gray-300 font-mono h-full flex flex-col">
@@ -315,7 +333,7 @@ export default function HomePage() {
         .animate-float {
           animation: float 6s ease-in-out infinite;
         }
-        .animate-fade-in-up {
+        .animate-fade-in_up {
           animation: fade-in-up 0.4s ease-out;
         }
         @keyframes fade-in-up {
